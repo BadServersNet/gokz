@@ -404,3 +404,13 @@ SELECT SteamID32, MapID, X, Y, Z, Angle0, Angle1 \
 	WHERE \
 		SteamID32 = %d AND \
 		MapID = %d";
+
+
+
+// =====[ LAST INSERT ID ]=====
+
+char sqlite_last_insert_id[] = "\
+SELECT last_insert_rowid()";
+
+char mysql_last_insert_id[] = "\
+SELECT LAST_INSERT_ID()";

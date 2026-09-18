@@ -13,8 +13,8 @@ void CreateGlobalForwards()
 	H_OnDatabaseConnect = new GlobalForward("GOKZ_DB_OnDatabaseConnect", ET_Ignore, Param_Cell);
 	H_OnClientSetup = new GlobalForward("GOKZ_DB_OnClientSetup", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
 	H_OnMapSetup = new GlobalForward("GOKZ_DB_OnMapSetup", ET_Ignore, Param_Cell);
-	H_OnTimeInserted = new GlobalForward("GOKZ_DB_OnTimeInserted", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
-	H_OnJumpstatPB = new GlobalForward("GOKZ_DB_OnJumpstatPB", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
+	H_OnTimeInserted = new GlobalForward("GOKZ_DB_OnTimeInserted", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
+	H_OnJumpstatPB = new GlobalForward("GOKZ_DB_OnJumpstatPB", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
 }
 
 void Call_OnDatabaseConnect()
@@ -40,7 +40,7 @@ void Call_OnMapSetup()
 	Call_Finish();
 }
 
-void Call_OnTimeInserted(int client, int steamID, int mapID, int course, int mode, int style, int runTimeMS, int teleportsUsed)
+void Call_OnTimeInserted(int client, int steamID, int mapID, int course, int mode, int style, int runTimeMS, int teleportsUsed, int timeID)
 {
 	Call_StartForward(H_OnTimeInserted);
 	Call_PushCell(client);
@@ -51,10 +51,11 @@ void Call_OnTimeInserted(int client, int steamID, int mapID, int course, int mod
 	Call_PushCell(style);
 	Call_PushCell(runTimeMS);
 	Call_PushCell(teleportsUsed);
+	Call_PushCell(timeID);
 	Call_Finish();
 }
 
-void Call_OnJumpstatPB(int client, int jumptype, int mode, float distance, int block, int strafes, float sync, float pre, float max, int airtime)
+void Call_OnJumpstatPB(int client, int jumptype, int mode, float distance, int block, int strafes, float sync, float pre, float max, int airtime, int jumpID)
 {
 	Call_StartForward(H_OnJumpstatPB);
 	Call_PushCell(client);
@@ -67,6 +68,7 @@ void Call_OnJumpstatPB(int client, int jumptype, int mode, float distance, int b
 	Call_PushCell(pre);
 	Call_PushCell(max);
 	Call_PushCell(airtime);
+	Call_PushCell(jumpID);
 	Call_Finish();
 }
 

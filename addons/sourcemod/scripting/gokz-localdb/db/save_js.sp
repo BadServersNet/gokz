@@ -89,6 +89,7 @@ public void DB_TxnSuccess_LookupJSRecordForSave(Handle db, DataPack data, int nu
 	}
 	
 	char query[1024];
+	int jumpID = 0;
 	int rows = SQL_GetRowCount(results[0]);
 	if (rows == 0)
 	{
@@ -128,12 +129,19 @@ public void DB_TxnSuccess_LookupJSRecordForSave(Handle db, DataPack data, int nu
 			}
 			int min_rec_id = SQL_FetchInt(results[0], JumpstatDB_Lookup_JumpID);
 			FormatEx(query, sizeof(query), sql_jumpstats_update, steamid, jumpType, mode, distance, block > 0, block, strafes, sync, pre, max, airtime, min_rec_id);
+			jumpID = min_rec_id;
 		}
-		
+
 	}
-	
+
+	data.WriteCell(jumpID);
+
 	Transaction txn = SQL_CreateTransaction();
 	txn.AddQuery(query);
+	if (jumpID == 0)
+	{
+		DB_AddLastInsertIdQuery(txn);
+	}
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_SaveJSRecord, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
 }
 
@@ -151,11 +159,17 @@ public void DB_TxnSuccess_SaveJSRecord(Handle db, DataPack data, int numQueries,
 	int pre = data.ReadCell();
 	int max = data.ReadCell();
 	int airtime = data.ReadCell();
+	int jumpID = data.ReadCell();
 	delete data;
-	
+
 	if (!IsValidClient(client) || GOKZ_JS_GetOption(client, JSOption_JumpstatsMaster) == JSToggleOption_Disabled)
 	{
 		return;
+	}
+
+	if (jumpID == 0 && numQueries > 1)
+	{
+		jumpID = DB_ReadLastInsertId(results[1]);
 	}
 	
 	float distanceFloat = float(distance) / GOKZ_DB_JS_DISTANCE_PRECISION;
@@ -185,7 +199,7 @@ public void DB_TxnSuccess_SaveJSRecord(Handle db, DataPack data, int numQueries,
 			block);
 	}
 	
-	Call_OnJumpstatPB(client, jumpType, mode, distanceFloat, block, strafes, syncFloat, preFloat, maxFloat, airtime);
+	Call_OnJumpstatPB(client, jumpType, mode, distanceFloat, block, strafes, syncFloat, preFloat, maxFloat, airtime, jumpID);
 }
 
 public void DB_DeleteBestJump(int client, int steamAccountID, int jumpType, int mode, int isBlock)

@@ -16,3 +16,22 @@ public void DB_TxnFailure_Generic_DataPack(Handle db, DataPack data, int numQuer
 	delete data;
 	LogError("Database transaction error: %s", error);
 }
+
+void DB_AddLastInsertIdQuery(Transaction txn)
+{
+	if (g_DBType == DatabaseType_SQLite)
+	{
+		txn.AddQuery(sqlite_last_insert_id);
+		return;
+	}
+	txn.AddQuery(mysql_last_insert_id);
+}
+
+int DB_ReadLastInsertId(Handle result)
+{
+	if (!SQL_FetchRow(result))
+	{
+		return -1;
+	}
+	return SQL_FetchInt(result, 0);
+}
