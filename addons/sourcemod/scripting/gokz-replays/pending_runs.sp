@@ -30,51 +30,21 @@ static ArrayList g_PendingRuns;
 void PendingRuns_OnTimeInserted(int client, int course, int mode, int style, int runTimeMS, int timeID)
 {
 	int userid = GetClientUserId(client);
-	int index = FindPendingRun(userid, course, mode, style, runTimeMS);
-	if (index == -1)
-	{
-		PendingRun run;
-		run.userid = userid;
-		run.course = course;
-		run.mode = mode;
-		run.style = style;
-		run.runTimeMS = runTimeMS;
-		run.hasTimeID = true;
-		run.timeID = timeID;
-		run.expiryTimer = CreateExpiryTimer(userid, course, mode, style, runTimeMS);
-		g_PendingRuns.PushArray(run);
-		return;
-	}
+	int index = FindOrCreatePendingRun(userid, course, mode, style, runTimeMS);
 
 	PendingRun run;
 	g_PendingRuns.GetArray(index, run);
 	run.hasTimeID = true;
 	run.timeID = timeID;
 	g_PendingRuns.SetArray(index, run);
-	FinalizeRun(index);
+	FinalizeRunIfComplete(index);
 }
 
 void PendingRuns_OnFileWritten(int client, int course, int mode, int style, float time, int teleportsUsed, const char[] stagingPath)
 {
 	int userid = GetClientUserId(client);
 	int runTimeMS = GOKZ_DB_TimeFloatToInt(time);
-	int index = FindPendingRun(userid, course, mode, style, runTimeMS);
-	if (index == -1)
-	{
-		PendingRun run;
-		run.userid = userid;
-		run.course = course;
-		run.mode = mode;
-		run.style = style;
-		run.runTimeMS = runTimeMS;
-		run.teleportsUsed = teleportsUsed;
-		run.time = time;
-		run.hasFile = true;
-		strcopy(run.stagingPath, sizeof(PendingRun::stagingPath), stagingPath);
-		run.expiryTimer = CreateExpiryTimer(userid, course, mode, style, runTimeMS);
-		g_PendingRuns.PushArray(run);
-		return;
-	}
+	int index = FindOrCreatePendingRun(userid, course, mode, style, runTimeMS);
 
 	PendingRun run;
 	g_PendingRuns.GetArray(index, run);
@@ -83,7 +53,7 @@ void PendingRuns_OnFileWritten(int client, int course, int mode, int style, floa
 	run.hasFile = true;
 	strcopy(run.stagingPath, sizeof(PendingRun::stagingPath), stagingPath);
 	g_PendingRuns.SetArray(index, run);
-	FinalizeRun(index);
+	FinalizeRunIfComplete(index);
 }
 
 
@@ -163,6 +133,24 @@ static int FindPendingRun(int userid, int course, int mode, int style, int runTi
 	return -1;
 }
 
+static int FindOrCreatePendingRun(int userid, int course, int mode, int style, int runTimeMS)
+{
+	int index = FindPendingRun(userid, course, mode, style, runTimeMS);
+	if (index != -1)
+	{
+		return index;
+	}
+
+	PendingRun run;
+	run.userid = userid;
+	run.course = course;
+	run.mode = mode;
+	run.style = style;
+	run.runTimeMS = runTimeMS;
+	run.expiryTimer = CreateExpiryTimer(userid, course, mode, style, runTimeMS);
+	return g_PendingRuns.PushArray(run);
+}
+
 static Handle CreateExpiryTimer(int userid, int course, int mode, int style, int runTimeMS)
 {
 	DataPack data = new DataPack();
@@ -187,10 +175,14 @@ static void KillExpiryTimer(int index)
 	g_PendingRuns.SetArray(index, run);
 }
 
-static void FinalizeRun(int index)
+static void FinalizeRunIfComplete(int index)
 {
 	PendingRun run;
 	g_PendingRuns.GetArray(index, run);
+	if (!run.hasTimeID || !run.hasFile)
+	{
+		return;
+	}
 	KillExpiryTimer(index);
 	g_PendingRuns.Erase(index);
 
