@@ -55,6 +55,26 @@
 		"chi"		"{grey}你的计时器文本现在已隐藏 NUB/PRO."
 		"ru"		"{grey}Ваше время теперь скрывает тип запуска."
 	}
+	"Option - Progress Text - Disable"
+	{
+		"en"		"{grey}Your map progress is now hidden."
+	}
+	"Option - Progress Text - Info Panel"
+	{
+		"en"		"{grey}Your map progress is now shown in the centre panel."
+	}
+	"Option - Progress Text - TP Menu"
+	{
+		"en"		"{grey}Your map progress is now shown in the teleport menu."
+	}
+	"Option - Progress Rank - Enable"
+	{
+		"en"		"{grey}Your map progress now shows your rank among running players."
+	}
+	"Option - Progress Rank - Disable"
+	{
+		"en"		"{grey}Your map progress no longer shows your rank."
+	}
 	"Option - Show Weapon - Enable"
 	{
 		"en"		"{grey}You are now showing your weapon."
@@ -144,6 +164,30 @@
 		"en"		"PAUSED"
 		"chi"		"计时暂停"
 		"ru"		"ПАУЗА"
+	}
+	"Info Panel Text - Progress"
+	{
+		// Progress: 42.3%
+		"#format"	"{1:.1f}"
+		"en"		"Progress: <font color='#ffffff'>{1}%%</font>"
+	}
+	"Info Panel Text - Progress Rank"
+	{
+		// Progress: 42.3% (#3/12)
+		"#format"	"{1:.1f},{2:d},{3:d}"
+		"en"		"Progress: <font color='#ffffff'>{1}%%</font> (<font color='#ffffff'>#{2}/{3}</font>)"
+	}
+	"TP Menu - Progress"
+	{
+		// Progress: 42.3%
+		"#format"	"{1:.1f}"
+		"en"		"Progress: {1}%%"
+	}
+	"TP Menu - Progress Rank"
+	{
+		// Progress: 42.3% (#3/12)
+		"#format"	"{1:.1f},{2:d},{3:d}"
+		"en"		"Progress: {1}%% (#{2}/{3})"
 	}
 	"Info Panel Text - Speed"
 	{
@@ -327,6 +371,14 @@
 	"Options Menu - Spectator List Position"
 	{
 		"en"		"Spectator list position"
+	}
+	"Options Menu - Progress Text"
+	{
+		"en"		"Map progress"
+	}
+	"Options Menu - Progress Rank"
+	{
+		"en"		"Map progress rank"
 	}
 	"Options Menu - Dynamic Menu"
 	{

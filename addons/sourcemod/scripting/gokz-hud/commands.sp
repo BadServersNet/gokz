@@ -8,6 +8,8 @@ void RegisterCommands()
 	RegConsoleCmd("sm_timertype", CommandToggleTimerType, "[KZ] Toggle visibility of your time type.");
 	RegConsoleCmd("sm_speed", CommandToggleSpeed, "[KZ] Toggle visibility of your speed and jump pre-speed.");
 	RegConsoleCmd("sm_hideweapon", CommandToggleShowWeapon, "[KZ] Toggle visibility of your weapon.");
+	RegConsoleCmd("sm_progress", CommandToggleProgress, "[KZ] Toggle visibility of your map progress along the server record.");
+	RegConsoleCmd("sm_progressrank", CommandToggleProgressRank, "[KZ] Toggle your rank among running players next to your map progress.");
 }
 
 public Action CommandMenu(int client, int args)
@@ -114,3 +116,43 @@ public Action CommandToggleShowWeapon(int client, int args)
 	}
 	return Plugin_Handled;
 } 
+
+public Action CommandToggleProgress(int client, int args)
+{
+	int progressText = GOKZ_HUD_GetOption(client, HUDOption_ProgressText);
+	int infoPanel = GOKZ_HUD_GetOption(client, HUDOption_InfoPanel);
+
+	if (progressText == ProgressText_Disabled)
+	{
+		if (infoPanel == InfoPanel_Enabled)
+		{
+			GOKZ_HUD_SetOption(client, HUDOption_ProgressText, ProgressText_InfoPanel);
+		}
+		else
+		{
+			GOKZ_HUD_SetOption(client, HUDOption_ProgressText, ProgressText_TPMenu);
+		}
+	}
+	else if (infoPanel == InfoPanel_Disabled && progressText == ProgressText_InfoPanel)
+	{
+		GOKZ_HUD_SetOption(client, HUDOption_ProgressText, ProgressText_TPMenu);
+	}
+	else
+	{
+		GOKZ_HUD_SetOption(client, HUDOption_ProgressText, ProgressText_Disabled);
+	}
+	return Plugin_Handled;
+}
+
+public Action CommandToggleProgressRank(int client, int args)
+{
+	if (GOKZ_HUD_GetOption(client, HUDOption_ProgressRank) == ProgressRank_Disabled)
+	{
+		GOKZ_HUD_SetOption(client, HUDOption_ProgressRank, ProgressRank_Enabled);
+	}
+	else
+	{
+		GOKZ_HUD_SetOption(client, HUDOption_ProgressRank, ProgressRank_Disabled);
+	}
+	return Plugin_Handled;
+}

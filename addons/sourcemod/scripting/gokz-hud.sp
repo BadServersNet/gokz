@@ -40,6 +40,7 @@ int gI_DynamicMenu[MAXPLAYERS + 1];
 #include "gokz-hud/menu.sp"
 #include "gokz-hud/options.sp"
 #include "gokz-hud/options_menu.sp"
+#include "gokz-hud/progress_text.sp"
 #include "gokz-hud/racing_text.sp"
 #include "gokz-hud/speed_text.sp"
 #include "gokz-hud/timer_text.sp"

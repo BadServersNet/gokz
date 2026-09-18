@@ -49,7 +49,7 @@ static void UpdateInfoPanel(int client, HUDInfo info)
 		return;
 	}
 	char infoPanelText[512];
-	FormatEx(infoPanelText, sizeof(infoPanelText), GetInfoPanel(player, info));
+	FormatEx(infoPanelText, sizeof(infoPanelText), "%s", GetInfoPanel(player, info));
 	if (infoPanelText[0] != '\0')
 	{
 		PrintCSGOHUDText(player.ID, infoPanelText);
@@ -62,16 +62,18 @@ static bool NothingEnabledInInfoPanel(KZPlayer player)
 	bool noSpeedText = player.SpeedText != SpeedText_InfoPanel || player.Paused;
 	bool noKeys = player.ShowKeys == ShowKeys_Disabled
 	 || player.ShowKeys == ShowKeys_Spectating && player.Alive;
-	return noTimerText && noSpeedText && noKeys;
+	bool noProgress = player.GetHUDOption(HUDOption_ProgressText) != ProgressText_InfoPanel;
+	return noTimerText && noSpeedText && noKeys && noProgress;
 }
 
 static char[] GetInfoPanel(KZPlayer player, HUDInfo info)
 {
 	char infoPanelText[512];
 	FormatEx(infoPanelText, sizeof(infoPanelText), 
-		"%s%s%s%s",
+		"%s%s%s%s%s",
 		GetSpectatorString(player, info),
 		GetTimeString(player, info), 
+		GetProgressString(player, info),
 		GetSpeedString(player, info), 
 		GetKeysString(player, info));
 	if (infoPanelText[0] == '\0')
@@ -150,6 +152,17 @@ static char[] GetTimeString(KZPlayer player, HUDInfo info)
 			GetPausedString(player, info));
 	}
 	return timeString;
+}
+
+static char[] GetProgressString(KZPlayer player, HUDInfo info)
+{
+	char progressString[128];
+	if (player.GetHUDOption(HUDOption_ProgressText) != ProgressText_InfoPanel)
+	{
+		return progressString;
+	}
+	strcopy(progressString, sizeof(progressString), FormatProgressTextForInfoPanel(player, info));
+	return progressString;
 }
 
 static char[] GetPausedString(KZPlayer player, HUDInfo info)

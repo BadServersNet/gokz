@@ -186,5 +186,37 @@ static void PrintOptionChangeMessage(int client, HUDOption option, any newValue)
 				}
 			}
 		}
+		case HUDOption_ProgressText:
+		{
+			switch (newValue)
+			{
+				case ProgressText_Disabled:
+				{
+					GOKZ_PrintToChat(client, true, "%t", "Option - Progress Text - Disable");
+				}
+				case ProgressText_InfoPanel:
+				{
+					GOKZ_PrintToChat(client, true, "%t", "Option - Progress Text - Info Panel");
+				}
+				case ProgressText_TPMenu:
+				{
+					GOKZ_PrintToChat(client, true, "%t", "Option - Progress Text - TP Menu");
+				}
+			}
+		}
+		case HUDOption_ProgressRank:
+		{
+			switch (newValue)
+			{
+				case ProgressRank_Disabled:
+				{
+					GOKZ_PrintToChat(client, true, "%t", "Option - Progress Rank - Disable");
+				}
+				case ProgressRank_Enabled:
+				{
+					GOKZ_PrintToChat(client, true, "%t", "Option - Progress Rank - Enable");
+				}
+			}
+		}
 	}
 } 
