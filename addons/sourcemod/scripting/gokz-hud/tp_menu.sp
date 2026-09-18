@@ -127,7 +127,7 @@ static void UpdateTPMenu(int client, HUDInfo info)
 		{
 			if (GetClientMenu(client) == MenuSource_None
 				|| gB_MenuShowing[player.ID] && GetClientAvgLoss(player.ID, NetFlow_Both) > EPSILON
-				|| gB_MenuShowing[player.ID] && player.TimerRunning && !player.Paused && player.TimerText == TimerText_TPMenu
+				|| gB_MenuShowing[player.ID] && HasLiveTitle(player)
 				|| gB_MenuShowing[player.ID] && force)
 			{
 				ShowTPMenu(player, info);
@@ -137,7 +137,7 @@ static void UpdateTPMenu(int client, HUDInfo info)
 		{
 			// There is no need to update this very often as there's no menu selection to be done here.
 			if (GetClientMenu(client) == MenuSource_None
-				|| gB_MenuShowing[player.ID] && player.TimerRunning && !player.Paused && player.TimerText == TimerText_TPMenu)
+				|| gB_MenuShowing[player.ID] && HasLiveTitle(player))
 			{
 				ShowPanel(player, info);
 			}
@@ -234,6 +234,19 @@ static void TPMenuSetTitle(KZPlayer player, Menu menu, HUDInfo info)
 	{
 		menu.SetTitle("%s", title);
 	}
+}
+
+static bool HasLiveTitle(KZPlayer player)
+{
+	if (!player.TimerRunning || player.Paused)
+	{
+		return false;
+	}
+	if (player.TimerText == TimerText_TPMenu)
+	{
+		return true;
+	}
+	return player.GetHUDOption(HUDOption_ProgressText) == ProgressText_TPMenu && IsProgressAvailable(player);
 }
 
 static void AppendProgressText(KZPlayer player, HUDInfo info, char[] title, int maxlength)

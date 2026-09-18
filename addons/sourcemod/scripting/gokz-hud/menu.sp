@@ -25,7 +25,8 @@ void OnPlayerSpawn_Menu(int client)
 
 void OnOptionChanged_Menu(int client, HUDOption option)
 {
-	if (option == HUDOption_TPMenu || option == HUDOption_TimerText)
+	bool changesMenuTitle = option == HUDOption_TimerText || option == HUDOption_ProgressText || option == HUDOption_ProgressRank;
+	if (option == HUDOption_TPMenu || changesMenuTitle)
 	{
 		CancelGOKZHUDMenu(client);
 	}
