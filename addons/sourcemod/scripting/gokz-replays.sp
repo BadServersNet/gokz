@@ -109,14 +109,11 @@ public void OnAllPluginsLoaded()
 		GOKZ_OnOptionsMenuReady(topMenu);
 	}
 
-	gH_DB = GOKZ_DB_GetDatabase();
-	if (gH_DB != null)
+	Database database = GOKZ_DB_GetDatabase();
+	if (database != null)
 	{
-		g_DBType = GOKZ_DB_GetDatabaseType();
-		DB_CreateTables();
-		OnDatabaseConnect_StoreUpload();
-		OnDatabaseConnect_Progress();
-		OnDatabaseConnect_TimeDiff();
+		DatabaseType databaseType = GOKZ_DB_GetDatabaseType();
+		OnDatabaseConnected(database, databaseType);
 	}
 
 	for (int client = 1; client <= MaxClients; client++)
@@ -334,12 +331,8 @@ public void GOKZ_OnCountedTeleport_Post(int client)
 
 public void GOKZ_DB_OnDatabaseConnect(DatabaseType DBType)
 {
-	gH_DB = GOKZ_DB_GetDatabase();
-	g_DBType = DBType;
-	DB_CreateTables();
-	OnDatabaseConnect_StoreUpload();
-	OnDatabaseConnect_Progress();
-	OnDatabaseConnect_TimeDiff();
+	Database database = GOKZ_DB_GetDatabase();
+	OnDatabaseConnected(database, DBType);
 }
 
 public void GOKZ_DB_OnTimeInserted(int client, int steamID, int mapID, int course, int mode, int style, int runTimeMS, int teleportsUsed, int timeID)
@@ -404,6 +397,16 @@ static void HookEvents()
 		StoreToAddress(gA_BotDuckAddr + view_as<Address>(i), 0x90, NumberType_Int8);
 	}
 	delete gameData;
+}
+
+static void OnDatabaseConnected(Database database, DatabaseType databaseType)
+{
+	gH_DB = database;
+	g_DBType = databaseType;
+	DB_CreateTables();
+	OnDatabaseConnect_StoreUpload();
+	OnDatabaseConnect_Progress();
+	OnDatabaseConnect_TimeDiff();
 }
 
 static void UpdateCurrentMap()
