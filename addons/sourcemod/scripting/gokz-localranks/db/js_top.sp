@@ -3,8 +3,7 @@ static int jumpTopMode[MAXPLAYERS + 1];
 static int jumpTopType[MAXPLAYERS + 1];
 static int jumpTopBlockType[MAXPLAYERS + 1];
 static bool jumpTopAwaitingReplay[MAXPLAYERS + 1];
-static int blockNums[MAXPLAYERS + 1][JS_TOP_RECORD_COUNT];
-static int jumpInfo[MAXPLAYERS + 1][JS_TOP_RECORD_COUNT][4];
+static int jumpTopJumpID[MAXPLAYERS + 1][JS_TOP_RECORD_COUNT];
 
 
 
@@ -99,11 +98,7 @@ void DB_TxnSuccess_GetJumpTop(Handle db, DataPack data, int numQueries, Handle[]
 				strafes, "Strafes", sync, "Sync", pre, "Pre", max, "Max", airtime, "Air",
 				admin);
 
-			jumpInfo[client][i][0] = steamid;
-			jumpInfo[client][i][1] = type;
-			jumpInfo[client][i][2] = mode;
-			jumpInfo[client][i][3] = jumpid;
-			blockNums[client][i] = 0;
+			jumpTopJumpID[client][i] = jumpid;
 		}
 	}
 	else
@@ -144,11 +139,7 @@ void DB_TxnSuccess_GetJumpTop(Handle db, DataPack data, int numQueries, Handle[]
 				strafes, "Strafes", sync, "Sync", pre, "Pre", max, "Max", airtime, "Air", 
 				admin);
 
-			jumpInfo[client][i][0] = steamid;
-			jumpInfo[client][i][1] = type;
-			jumpInfo[client][i][2] = mode;
-			jumpInfo[client][i][3] = jumpid;
-			blockNums[client][i] = block;
+			jumpTopJumpID[client][i] = jumpid;
 		}
 	}
 	menu.Display(client, MENU_TIME_FOREVER);
@@ -273,9 +264,12 @@ public int MenuHandler_JumpTopList(Menu menu, MenuAction action, int param1, int
 {
 	if (action == MenuAction_Select)
 	{
-		int jumpID = jumpInfo[param1][param2][3];
-		jumpTopAwaitingReplay[param1] = true;
-		GOKZ_RP_LoadJumpReplay(param1, jumpID);
+		int jumpID = jumpTopJumpID[param1][param2];
+		jumpTopAwaitingReplay[param1] = GOKZ_RP_LoadJumpReplay(param1, jumpID);
+		if (!jumpTopAwaitingReplay[param1])
+		{
+			DB_OpenJumpTop(param1, jumpTopMode[param1], jumpTopType[param1], jumpTopBlockType[param1]);
+		}
 	}
 
 	if (action == MenuAction_Cancel && param2 == MenuCancel_Exit)
