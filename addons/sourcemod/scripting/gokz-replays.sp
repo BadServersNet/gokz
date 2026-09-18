@@ -8,14 +8,17 @@
 #include <movementapi>
 
 #include <gokz/core>
+#include <gokz/localdb>
 #include <gokz/localranks>
 #include <gokz/replays>
+
+#include <s3>
+#include <autoexecconfig>
 
 #undef REQUIRE_EXTENSIONS
 #undef REQUIRE_PLUGIN
 #include <gokz/hud>
 #include <gokz/jumpstats>
-#include <gokz/localdb>
 
 #pragma newdecls required
 #pragma semicolon 1
@@ -34,24 +37,39 @@ public Plugin myinfo =
 };
 
 bool gB_GOKZHUD;
-bool gB_GOKZLocalDB;
 char gC_CurrentMap[64];
 int gI_CurrentMapFileSize;
 bool gB_HideNameChange;
-bool gB_NubRecordMissed[MAXPLAYERS + 1];
-ArrayList g_ReplayInfoCache;
 Address gA_BotDuckAddr;
 int gI_BotDuckPatchRestore[40]; // Size of patched section in gamedata
 int gI_BotDuckPatchLength;
+Database gH_DB;
+DatabaseType g_DBType;
+S3Client gH_S3;
 
 DynamicDetour gH_DHooks_TeamFull;
 
+#include "gokz-replays/db/sql.sp"
+#include "gokz-replays/db/helpers.sp"
+#include "gokz-replays/db/create_tables.sp"
+#include "gokz-replays/db/replays.sp"
+#include "gokz-replays/db/codes.sp"
+#include "gokz-replays/progress.sp"
+#include "gokz-replays/progress_menu.sp"
+#include "gokz-replays/timediff.sp"
 #include "gokz-replays/commands.sp"
 #include "gokz-replays/nav.sp"
 #include "gokz-replays/playback.sp"
+#include "gokz-replays/playback_request.sp"
 #include "gokz-replays/recording.sp"
-#include "gokz-replays/replay_cache.sp"
-#include "gokz-replays/replay_menu.sp"
+#include "gokz-replays/replay_file.sp"
+#include "gokz-replays/menu.sp"
+#include "gokz-replays/menu_entries.sp"
+#include "gokz-replays/pending_runs.sp"
+#include "gokz-replays/store_config.sp"
+#include "gokz-replays/store_paths.sp"
+#include "gokz-replays/store_upload.sp"
+#include "gokz-replays/store_download.sp"
 #include "gokz-replays/api.sp"
 #include "gokz-replays/controls.sp"
 
@@ -72,14 +90,34 @@ public void OnPluginStart()
 	LoadTranslations("gokz-replays.phrases");
 	
 	CreateGlobalForwards();
+	CreateConVars();
 	HookEvents();
 	RegisterCommands();
+	OnPluginStart_PendingRuns();
+	OnPluginStart_StoreUpload();
+	OnPluginStart_StoreDownload();
+	OnPluginStart_Progress();
 }
 
 public void OnAllPluginsLoaded()
 {
-	gB_GOKZLocalDB = LibraryExists("gokz-localdb");
 	gB_GOKZHUD = LibraryExists("gokz-hud");
+
+	TopMenu topMenu;
+	if (LibraryExists("gokz-core") && ((topMenu = GOKZ_GetOptionsTopMenu()) != null))
+	{
+		GOKZ_OnOptionsMenuReady(topMenu);
+	}
+
+	gH_DB = GOKZ_DB_GetDatabase();
+	if (gH_DB != null)
+	{
+		g_DBType = GOKZ_DB_GetDatabaseType();
+		DB_CreateTables();
+		OnDatabaseConnect_StoreUpload();
+		OnDatabaseConnect_Progress();
+		OnDatabaseConnect_TimeDiff();
+	}
 
 	for (int client = 1; client <= MaxClients; client++)
 	{
@@ -92,18 +130,21 @@ public void OnAllPluginsLoaded()
 
 public void OnLibraryAdded(const char[] name)
 {
-	gB_GOKZLocalDB = gB_GOKZLocalDB || StrEqual(name, "gokz-localdb");
 	gB_GOKZHUD = gB_GOKZHUD || StrEqual(name, "gokz-hud");
 }
 
 public void OnLibraryRemoved(const char[] name)
 {
-	gB_GOKZLocalDB = gB_GOKZLocalDB && !StrEqual(name, "gokz-localdb");
 	gB_GOKZHUD = gB_GOKZHUD && !StrEqual(name, "gokz-hud");
 }
 
 public void OnPluginEnd()
 {
+	if (gH_S3 != null)
+	{
+		delete gH_S3;
+	}
+
 	// Restore bot auto duck behavior.
 	if (gA_BotDuckAddr == Address_Null)
 	{
@@ -122,11 +163,22 @@ public void OnMapStart()
 	UpdateCurrentMap(); // Do first
 	OnMapStart_Nav();
 	OnMapStart_Recording();
-	OnMapStart_ReplayCache();
+	OnMapStart_StoreCache();
+	OnMapStart_StoreUpload();
+	OnMapStart_Progress();
+	OnMapStart_TimeDiff();
+}
+
+public void OnMapEnd()
+{
+	OnMapEnd_PendingRuns();
+	OnMapEnd_StoreDownload();
+	OnMapEnd_ProgressMenu();
 }
 
 public void OnConfigsExecuted()
 {
+	Store_OnConfigsExecuted();
 	FindConVar("mp_autoteambalance").BoolValue = false;
 	FindConVar("mp_limitteams").IntValue = 0;
 	// Stop the bots!
@@ -197,17 +249,23 @@ public void OnClientPutInServer(int client)
 {
 	OnClientPutInServer_Playback(client);
 	OnClientPutInServer_Recording(client);
-}
-
-public void OnClientAuthorized(int client, const char[] auth)
-{
-	OnClientAuthorized_Recording(client);
+	OnClientPutInServer_ReplayMenu(client);
+	OnClientPutInServer_ReplayEntries(client);
+	OnClientPutInServer_PlaybackRequest(client);
+	OnClientPutInServer_Progress(client);
+	OnClientPutInServer_ProgressMenu(client);
+	OnClientPutInServer_TimeDiff(client);
 }
 
 public void OnClientDisconnect(int client)
 {
 	OnClientDisconnect_Playback(client);
 	OnClientDisconnect_Recording(client);
+	OnClientDisconnect_PendingRuns(client);
+	OnClientDisconnect_StoreDownload(client);
+	OnClientDisconnect_Progress(client);
+	OnClientDisconnect_ProgressMenu(client);
+	OnClientDisconnect_TimeDiff(client);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -240,13 +298,15 @@ public Action GOKZ_OnTimerStart(int client, int course)
 
 public void GOKZ_OnTimerStart_Post(int client, int course)
 {
-	gB_NubRecordMissed[client] = false;
 	GOKZ_OnTimerStart_Post_Recording(client);
+	GOKZ_OnTimerStart_Progress(client, course);
+	GOKZ_OnTimerStart_TimeDiff(client);
 }
 
 public void GOKZ_OnTimerEnd_Post(int client, int course, float time, int teleportsUsed)
 {
 	GOKZ_OnTimerEnd_Recording(client, course, time, teleportsUsed);
+	GOKZ_OnTimerEnd_Progress(client, course);
 }
 
 public void GOKZ_OnPause_Post(int client)
@@ -262,20 +322,29 @@ public void GOKZ_OnResume_Post(int client)
 public void GOKZ_OnTimerStopped(int client)
 {
 	GOKZ_OnTimerStopped_Recording(client);
+	GOKZ_OnTimerStopped_Progress(client);
 }
 
 public void GOKZ_OnCountedTeleport_Post(int client)
 {
 	GOKZ_OnCountedTeleport_Recording(client);
+	GOKZ_OnCountedTeleport_Progress(client);
+	GOKZ_OnCountedTeleport_TimeDiff(client);
 }
 
-public void GOKZ_LR_OnRecordMissed(int client, float recordTime, int course, int mode, int style, int recordType)
+public void GOKZ_DB_OnDatabaseConnect(DatabaseType DBType)
 {
-	if (recordType == RecordType_Nub)
-	{
-		gB_NubRecordMissed[client] = true;
-	}
-	GOKZ_LR_OnRecordMissed_Recording(client, recordType);
+	gH_DB = GOKZ_DB_GetDatabase();
+	g_DBType = DBType;
+	DB_CreateTables();
+	OnDatabaseConnect_StoreUpload();
+	OnDatabaseConnect_Progress();
+	OnDatabaseConnect_TimeDiff();
+}
+
+public void GOKZ_DB_OnTimeInserted(int client, int steamID, int mapID, int course, int mode, int style, int runTimeMS, int teleportsUsed, int timeID)
+{
+	PendingRuns_OnTimeInserted(client, course, mode, style, runTimeMS, timeID);
 }
 
 public void GOKZ_AC_OnPlayerSuspected(int client, ACReason reason)
@@ -283,9 +352,9 @@ public void GOKZ_AC_OnPlayerSuspected(int client, ACReason reason)
 	GOKZ_AC_OnPlayerSuspected_Recording(client, reason);
 }
 
-public void GOKZ_DB_OnJumpstatPB(int client, int jumptype, int mode, float distance, int block, int strafes, float sync, float pre, float max, int airtime)
+public void GOKZ_DB_OnJumpstatPB(int client, int jumptype, int mode, float distance, int block, int strafes, float sync, float pre, float max, int airtime, int jumpID)
 {
-	GOKZ_DB_OnJumpstatPB_Recording(client, jumptype, distance, block, strafes, sync, pre, max, airtime);
+	GOKZ_DB_OnJumpstatPB_Recording(client, jumptype, distance, block, strafes, sync, pre, max, airtime, jumpID);
 }
 
 public void GOKZ_OnOptionsLoaded(int client)
@@ -293,7 +362,19 @@ public void GOKZ_OnOptionsLoaded(int client)
 	if (IsFakeClient(client))
 	{
 		GOKZ_OnOptionsLoaded_Playback(client);
+		return;
 	}
+	GOKZ_OnOptionsLoaded_TimeDiff(client);
+}
+
+public void GOKZ_OnOptionChanged(int client, const char[] option, any newValue)
+{
+	GOKZ_OnOptionChanged_TimeDiff(client, option, newValue);
+}
+
+public void GOKZ_OnOptionsMenuReady(TopMenu topMenu)
+{
+	OnOptionsMenuReady_TimeDiff(topMenu);
 }
 
 // =====[ PRIVATE ]=====

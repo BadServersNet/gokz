@@ -1,19 +1,48 @@
 "Phrases"
 {
 	// =====[ CHAT MESSAGES ]=====
-	"No Replays Found (Map)"
+	"No Replays Found (Any Map)"
 	{
-		"en"		"{darkred}No replays for this map were found."
-		"chi"		"{darkred}当前地图没有录像."
-		"ru"		"{darkred}На этой карте не найдено повторов."
+		"en"		"{darkred}No run replays have been recorded on this server yet."
+	}
+	"No Replays Found (Mine, Any Map)"
+	{
+		"en"		"{darkred}You have no run replays on this server yet."
 	}
 	"No Replays Found (Mode)"
 	{
-		// No Vanilla replays for this map were found.
+		// No Vanilla replays were found on kz_map.
+		"#format"	"{1:s},{2:s}"
+		"en"		"{darkred}No {1} replays were found on {2}."
+	}
+	"No Replays Found (Course)"
+	{
+		// No replays were found on kz_map (Bonus 1).
+		"#format"	"{1:s},{2:s}"
+		"en"		"{darkred}No replays were found on {1} ({2})."
+	}
+	"No Replays Found (Mine)"
+	{
+		// You have no replays on kz_map (Main).
+		"#format"	"{1:s},{2:s}"
+		"en"		"{darkred}You have no replays on {1} ({2})."
+	}
+	"No Jump Replays Found"
+	{
+		// No KZTimer Longjump replays were found on kz_map.
+		"#format"	"{1:s},{2:s},{3:s}"
+		"en"		"{darkred}No {1} {2} replays were found on {3}."
+	}
+	"No Recent Replays Found"
+	{
+		// No replays have been recorded on kz_map yet.
 		"#format"	"{1:s}"
-		"en"		"{darkred}No {1} replays on this map were found."
-		"chi"		"{darkred}当前地图没有录像({1})."
-		"ru"		"{darkred}На этой карте нет повторов {1} режима."
+		"en"		"{darkred}No replays have been recorded on {1} yet."
+	}
+	"Replay Map Not Found"
+	{
+		"#format"	"{1:s}"
+		"en"		"{darkred}No replays were found for a map matching \"{1}\"."
 	}
 	"No Bots Available"
 	{
@@ -26,43 +55,383 @@
 		"en"		"{red}No replay found!"
 		"chi"		"{red}本地未找到回放!"
 	}
+	"Replays Unavailable"
+	{
+		"en"		"{darkred}Replays are unavailable because the database is not connected."
+	}
+	"Replay Not Available"
+	{
+		"en"		"{darkred}This replay is not available on this server."
+	}
+	"Replay Download - Start"
+	{
+		// Downloading replay (1.2 MB)...
+		"#format"	"{1:s}"
+		"en"		"{grey}Downloading replay ({1})..."
+	}
+	"Replay Download - Joined"
+	{
+		"en"		"{grey}This replay is already being downloaded, it will start when it is ready."
+	}
+	"Replay Download - Progress"
+	{
+		// Downloading replay: 42%
+		"#format"	"{1:d}"
+		"en"		"Downloading replay: {1}%%"
+	}
+	"Replay Download - Done"
+	{
+		"en"		"{lime}Replay downloaded."
+	}
+	"Replay Download - Failed"
+	{
+		"en"		"{darkred}The replay could not be downloaded. Please try again later."
+	}
 
 
 	// =====[ REPLAY MENU ]=====
-	"Replay Menu - Title"
+	"Replay Menu (Hub) - Title"
 	{
-		// Load a Replay
+		// kz_map Replays
 		//
-		// Map - kz_map
-		// Mode - Vanilla
+		"#format"	"{1:s}"
+		"en"		"{1} Replays\n "
+	}
+	"Replay Menu (Maps) - Title"
+	{
+		// Run Replays
 		//
-		"#format"	"{1:s},{2:s}"
-		"en"		"Load a Replay\n \nMap - {1}\nMode - {2}\n "
-		"chi"		"加载录像\n \n地图 - {1}\n模式 - {2}\n "
-		"ru"		"Загрузить повтор\n \nКарта - {1}\nРежим - {2}\n "
+		"#format"	"{1:s}"
+		"en"		"{1}\n "
 	}
 	"Replay Menu (Mode) - Title"
 	{
-		// Load a Replay
+		// kz_map Run Replays
 		//
-		// Map - kz_map
-		//
-		// Select a Mode
-		"#format"	"{1:s}"
-		"en"		"Load a Replay\n \nMap - {1}\n \nSelect a Mode"
-		"chi"		"加载录像\n \n地图 - {1}\n \n选择模式"
-		"ru"		"Загрузить повтор\n \nКарта - {1}\n \nВыбрать режим"
+		"#format"	"{1:s},{2:s}"
+		"en"		"{2} {1}\n "
 	}
+	"Replay Menu (Course) - Title"
+	{
+		// kz_map Run Replays
+		//
+		// Mode - Vanilla
+		//
+		"#format"	"{1:s},{2:s},{3:s}"
+		"en"		"{2} {1}\n \nMode - {3}\n "
+	}
+	"Replay Menu (Type) - Title"
+	{
+		// All maps Jump Replays
+		//
+		// Mode - KZTimer
+		//
+		"#format"	"{1:s},{2:s},{3:s}"
+		"en"		"{2} {1}\n \nMode - {3}\n "
+	}
+	"Replay Menu (Run List) - Title"
+	{
+		// kz_map Run Replays
+		//
+		// Mode - Vanilla
+		// Course - Main
+		//
+		"#format"	"{1:s},{2:s},{3:s},{4:s}"
+		"en"		"{2} {1}\n \nMode - {3}\nCourse - {4}\n "
+	}
+	"Replay Menu (Jump List) - Title"
+	{
+		// All maps Jump Replays
+		//
+		// Mode - KZTimer
+		// Type - Longjump
+		//
+		"#format"	"{1:s},{2:s},{3:s},{4:s}"
+		"en"		"{2} {1}\n \nMode - {3}\nType - {4}\n "
+	}
+	"Replay Menu (List) - Title"
+	{
+		// kz_map Recent Replays
+		//
+		"#format"	"{1:s},{2:s}"
+		"en"		"{2} {1}\n "
+	}
+	"Replay Menu - Run Replays"
+	{
+		"en"		"Run Replays"
+	}
+	"Replay Menu - My Run Replays"
+	{
+		"en"		"My Run Replays"
+	}
+	"Replay Menu - Jump Replays"
+	{
+		"en"		"Jump Replays"
+	}
+	"Replay Menu - Recent Replays"
+	{
+		"en"		"Recent Replays"
+	}
+	"Replay Menu - All Maps"
+	{
+		"en"		"All maps"
+	}
+	"Replay Menu - Show All Maps"
+	{
+		"en"		"Show all maps"
+	}
+	"Replay Menu - Show Current Map"
+	{
+		// Show kz_map only
+		"#format"	"{1:s}"
+		"en"		"Show {1} only"
+	}
+	"Replay Menu - Map Item"
+	{
+		// kz_map (12)
+		"#format"	"{1:s},{2:d}"
+		"en"		"{1} ({2})"
+	}
+	"Replay Menu - Main Course"
+	{
+		"en"		"Main"
+	}
+	"Replay Menu - Bonus"
+	{
+		"#format"	"{1:d}"
+		"en"		"Bonus {1}"
+	}
+	"Block"
+	{
+		"en"		"Block"
+		"chi"		"块"
+		"ru"		"Блок"
+	}
+
+
+	// =====[ REPLAY INFO PANEL ]=====
+	"Replay Info - Title"
+	{
+		"en"		"Replay Info"
+	}
+	"Replay Info - Player"
+	{
+		"#format"	"{1:s}"
+		"en"		"Player: {1}"
+	}
+	"Replay Info - Map"
+	{
+		"#format"	"{1:s}"
+		"en"		"Map: {1}"
+	}
+	"Replay Info - Mode"
+	{
+		"#format"	"{1:s}"
+		"en"		"Mode: {1}"
+	}
+	"Replay Info - Course"
+	{
+		"#format"	"{1:s}"
+		"en"		"Course: {1}"
+	}
+	"Replay Info - Run"
+	{
+		// Time: 01:23.45 PRO (0 teleports)
+		"#format"	"{1:s},{2:s},{3:d}"
+		"en"		"Time: {1} {2} ({3} teleports)"
+	}
+	"Replay Info - Rank"
+	{
+		// Rank: #3 PRO
+		"#format"	"{1:d},{2:s}"
+		"en"		"Rank: #{1} {2}"
+	}
+	"Replay Info - Jump"
+	{
+		// Jump: Longjump 268.42
+		"#format"	"{1:s},{2:.2f}"
+		"en"		"Jump: {1} {2}"
+	}
+	"Replay Info - Block Jump"
+	{
+		// Jump: Longjump 256 block (268.42)
+		"#format"	"{1:s},{2:d},{3:.2f}"
+		"en"		"Jump: {1} {2} block ({3})"
+	}
+	"Replay Info - Jump Stats"
+	{
+		// Strafes: 8 | Sync: 85.3% | Pre: 276 | Max: 310
+		"#format"	"{1:d},{2:.1f},{3:.0f},{4:.0f}"
+		"en"		"Strafes: {1} | Sync: {2}%% | Pre: {3} | Max: {4}"
+	}
+	"Replay Info - Recorded"
+	{
+		"#format"	"{1:s}"
+		"en"		"Recorded: {1}"
+	}
+	"Replay Info - Wrong Map"
+	{
+		"#format"	"{1:s}"
+		"en"		"Recorded on {1}. Switch to that map, or use !replay <code> there, to watch it."
+	}
+	"Replay Info - Unknown Map"
+	{
+		"en"		"unknown"
+	}
+	"Replay Info - Watch"
+	{
+		"en"		"Watch"
+	}
+	"Replay Info - Download URL"
+	{
+		"en"		"Download URL (to console)"
+	}
+	"Replay Info - Back"
+	{
+		"en"		"Back"
+	}
+	"Replay Store - Check Console"
+	{
+		"en"		"{grey}Check your console for the output."
+	}
+	"Replay Info - Code"
+	{
+		"#format"	"{1:s}"
+		"en"		"Code: {1}"
+	}
+	"Replay Info - Output Code"
+	{
+		"en"		"Output Code"
+	}
+	"Replay Info - Code Chat"
+	{
+		// Replay code: ABC123
+		"#format"	"{1:s}"
+		"en"		"{grey}Replay code: {lime}{1}"
+	}
+	"Replay Code Invalid"
+	{
+		"en"		"{darkred}That is not a valid replay code. Codes are 6 letters or digits, e.g. ABC234"
+	}
+	"Progress Replay - Set"
+	{
+		// Your progress is now measured against Player's 01:23.45 PRO run.
+		"#format"	"{1:s},{2:s},{3:s}"
+		"en"		"{grey}Your progress is now measured against {lime}{1}{grey}'s {2} {3} run."
+	}
+	"Progress Replay - Reset"
+	{
+		"en"		"{grey}Your progress is measured against the server record again."
+	}
+	"Progress Replay - Loading"
+	{
+		"en"		"{grey}Downloading that replay, your progress will switch to it when it is ready."
+	}
+	"Progress Replay - Not A Run"
+	{
+		"en"		"{darkred}No run replay has that code."
+	}
+	"Progress Replay - Wrong Map"
+	{
+		"#format"	"{1:s}"
+		"en"		"{darkred}That replay was recorded on {1}. Only main course replays of this map can be used for progress."
+	}
+	"Progress Replay - Wrong Course"
+	{
+		"en"		"{darkred}Only main course replays can be used for progress."
+	}
+	"Progress Replay - Unavailable"
+	{
+		"en"		"{darkred}That replay is not available on this server."
+	}
+	"Options Menu - Time Diff"
+	{
+		"en"		"Time diff vs your PB"
+	}
+	"Options Menu - Time Diff Interval"
+	{
+		"en"		"Time diff interval"
+	}
+	"Time Diff - Auto Interval"
+	{
+		"en"		"Auto (PB / 20)"
+	}
+	"Time Diff - Seconds"
+	{
+		"#format"	"{1:d}"
+		"en"		"{1}s"
+	}
+	"Time Diff - Enabled"
+	{
+		// Time diff vs your PB replay is on, every 10s while you run.
+		"#format"	"{1:s}"
+		"en"		"{grey}Time diff vs your PB replay is on, every {lime}{1}{grey} while you run."
+	}
+	"Time Diff - Disabled"
+	{
+		"en"		"{grey}Time diff vs your PB replay is off."
+	}
+	"Time Diff - Interval Set"
+	{
+		"#format"	"{1:s}"
+		"en"		"{grey}Time diff interval set to {lime}{1}{grey}."
+	}
+	"Time Diff - Usage"
+	{
+		"#format"	"{1:d}"
+		"en"		"{darkred}Usage: !timediff [seconds|auto|off], seconds from 1 to {1}."
+	}
+	"Time Diff - No PB Replay"
+	{
+		"en"		"{grey}You have no run replay on this map in your mode yet, so there is nothing to compare against."
+	}
+	"Time Diff - Ahead"
+	{
+		// You are 1.23s ahead of your PB.
+		"#format"	"{1:.2f}"
+		"en"		"{grey}You are {lime}{1}s ahead{grey} of your PB."
+	}
+	"Time Diff - Behind"
+	{
+		"#format"	"{1:.2f}"
+		"en"		"{grey}You are {red}{1}s behind{grey} your PB."
+	}
+	"Time Diff - Even"
+	{
+		"en"		"{grey}You are {lime}even{grey} with your PB."
+	}
+	"Progress Menu - Title"
+	{
+		"en"		"Map Progress\n "
+	}
+	"Progress Menu - Row"
+	{
+		// #1 84.2% - Player
+		"#format"	"{1:d},{2:.1f},{3:N}"
+		"en"		"#{1} {2}%% - {3}"
+	}
+	"Progress Menu - Empty"
+	{
+		"en"		"Nobody is running the main course."
+	}
+	"Progress Menu - Exit"
+	{
+		"en"		"Exit"
+	}
+	"Replay Code"
+	{
+		// Your replay was saved. Watch it anywhere with !replay ABC123
+		"#format"	"{1:s}"
+		"en"		"{grey}Your replay was saved. Watch it anywhere with {lime}!replay {1}"
+	}
+
+
+	// =====[ PLAYBACK ]=====
 	"Replay Menu - Wrong Map"
 	{
 		"#format"	"{1:s}"
 		"en"		"{darkred}This replay was not recorded on this map. Please switch to {1} and try again."
 		"chi"		"{darkred}此回放并非在此地图上记录的. 请切换到 {1} 再次尝试."
-	}
-	"Replay Menu - No File"
-	{
-		"en"		"{darkred}There is no file for this replay. Please contact an admin if you think this is an error."
-		"chi"		"{darkred}没有用于此回放的文件. 如果你认为这是一个错误，请联系管理员."
 	}
 	"Replay Menu - Wrong Tickrate"
 	{

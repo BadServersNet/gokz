@@ -1,8 +1,10 @@
 
 static int jumpTopMode[MAXPLAYERS + 1];
 static int jumpTopType[MAXPLAYERS + 1];
+static int jumpTopBlockType[MAXPLAYERS + 1];
+static bool jumpTopAwaitingReplay[MAXPLAYERS + 1];
 static int blockNums[MAXPLAYERS + 1][JS_TOP_RECORD_COUNT];
-static int jumpInfo[MAXPLAYERS + 1][JS_TOP_RECORD_COUNT][3];
+static int jumpInfo[MAXPLAYERS + 1][JS_TOP_RECORD_COUNT][4];
 
 
 
@@ -40,6 +42,7 @@ void DB_TxnSuccess_GetJumpTop(Handle db, DataPack data, int numQueries, Handle[]
 
 	jumpTopMode[client] = mode;
 	jumpTopType[client] = type;
+	jumpTopBlockType[client] = blockType;
 
 	int rows = SQL_GetRowCount(results[0]);
 	if (rows == 0)
@@ -99,6 +102,7 @@ void DB_TxnSuccess_GetJumpTop(Handle db, DataPack data, int numQueries, Handle[]
 			jumpInfo[client][i][0] = steamid;
 			jumpInfo[client][i][1] = type;
 			jumpInfo[client][i][2] = mode;
+			jumpInfo[client][i][3] = jumpid;
 			blockNums[client][i] = 0;
 		}
 	}
@@ -143,11 +147,22 @@ void DB_TxnSuccess_GetJumpTop(Handle db, DataPack data, int numQueries, Handle[]
 			jumpInfo[client][i][0] = steamid;
 			jumpInfo[client][i][1] = type;
 			jumpInfo[client][i][2] = mode;
+			jumpInfo[client][i][3] = jumpid;
 			blockNums[client][i] = block;
 		}
 	}
 	menu.Display(client, MENU_TIME_FOREVER);
 	PrintToConsole(client, "");
+}
+
+void OnReplayPlaybackFailed_JumpTop(int client)
+{
+	if (!jumpTopAwaitingReplay[client])
+	{
+		return;
+	}
+	jumpTopAwaitingReplay[client] = false;
+	DB_OpenJumpTop(client, jumpTopMode[client], jumpTopType[client], jumpTopBlockType[client]);
 }
 
 // =====[ MENUS ]=====
@@ -258,20 +273,9 @@ public int MenuHandler_JumpTopList(Menu menu, MenuAction action, int param1, int
 {
 	if (action == MenuAction_Select)
 	{
-		char path[PLATFORM_MAX_PATH];
-		if (blockNums[param1][param2] == 0)
-		{
-			BuildPath(Path_SM, path, sizeof(path), 
-				"%s/%d/%d_%s_%s.%s", 
-				RP_DIRECTORY_JUMPS, jumpInfo[param1][param2][0], jumpTopType[param1], gC_ModeNamesShort[jumpInfo[param1][param2][2]], gC_StyleNamesShort[0], RP_FILE_EXTENSION);
-		}
-		else
-		{
-			BuildPath(Path_SM, path, sizeof(path), 
-				"%s/%d/%s/%d_%d_%s_%s.%s", 
-				RP_DIRECTORY_JUMPS, jumpInfo[param1][param2][0], RP_DIRECTORY_BLOCKJUMPS, jumpTopType[param1], blockNums[param1][param2], gC_ModeNamesShort[jumpInfo[param1][param2][2]], gC_StyleNamesShort[0], RP_FILE_EXTENSION);
-		}
-		GOKZ_RP_LoadJumpReplay(param1, path);
+		int jumpID = jumpInfo[param1][param2][3];
+		jumpTopAwaitingReplay[param1] = true;
+		GOKZ_RP_LoadJumpReplay(param1, jumpID);
 	}
 
 	if (action == MenuAction_Cancel && param2 == MenuCancel_Exit)
