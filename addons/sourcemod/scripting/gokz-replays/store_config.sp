@@ -76,7 +76,11 @@ void CreateConVars()
 
 void Store_RebuildClient()
 {
-	rebuildTimer = INVALID_HANDLE;
+	if (rebuildTimer != INVALID_HANDLE)
+	{
+		KillTimer(rebuildTimer);
+		rebuildTimer = INVALID_HANDLE;
+	}
 
 	if (gH_S3 != null)
 	{
@@ -181,6 +185,7 @@ public void OnConVarChanged_Store(ConVar convar, const char[] oldValue, const ch
 
 public Action Timer_RebuildClient(Handle timer)
 {
+	rebuildTimer = INVALID_HANDLE;
 	Store_RebuildClient();
 	return Plugin_Stop;
 }
