@@ -62,7 +62,8 @@ static bool NothingEnabledInInfoPanel(KZPlayer player)
 	bool noSpeedText = player.SpeedText != SpeedText_InfoPanel || player.Paused;
 	bool noKeys = player.ShowKeys == ShowKeys_Disabled
 	 || player.ShowKeys == ShowKeys_Spectating && player.Alive;
-	bool noProgress = player.GetHUDOption(HUDOption_ProgressText) != ProgressText_InfoPanel;
+	bool noProgress = player.GetHUDOption(HUDOption_ProgressText) != ProgressText_InfoPanel
+	 || !IsProgressAvailable(player);
 	return noTimerText && noSpeedText && noKeys && noProgress;
 }
 
@@ -162,6 +163,10 @@ static char[] GetProgressString(KZPlayer player, HUDInfo info)
 		return progressString;
 	}
 	strcopy(progressString, sizeof(progressString), FormatProgressTextForInfoPanel(player, info));
+	if (progressString[0] != '\0')
+	{
+		StrCat(progressString, sizeof(progressString), "\n");
+	}
 	return progressString;
 }
 
