@@ -14,24 +14,25 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:    
+  build:
     runs-on: ubuntu-24.04
-    
+    container:
+      image: registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest
+
     steps:
       # Checks-out the repository under $GITHUB_WORKSPACE
-      - uses: actions/checkout@v2
-      
+      - uses: actions/checkout@v4
+
       - name: version
-        run: echo "GOKZ_VERSION=$(git describe --tags --exact-match 2> /dev/null || git rev-parse --short HEAD)" >> $GITHUB_ENV
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          echo "GOKZ_VERSION=$(git describe --tags --exact-match 2> /dev/null || git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: compile
         run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y wget libc6:i386 lib32stdc++6 zip
           mkdir sm
           cd sm
-          wget -q -O - "http://sourcemod.net/latest.php?os=linux&version=${{env.SM_VERSION}}" | tar x -zf -
+          curl -sL "https://sourcemod.net/latest.php?os=linux&version=${{env.SM_VERSION}}" | tar x -zf -
           cp -r ../addons .
           cd ./addons/sourcemod/scripting
           echo "#define GOKZ_VERSION \"${GOKZ_VERSION}\"" > include/gokz/version.inc
