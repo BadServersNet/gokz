@@ -174,17 +174,17 @@
 	}
 	"Replay Menu - All Maps"
 	{
-		"en"		"All maps"
+		"en"		"All Maps"
 	}
 	"Replay Menu - Show All Maps"
 	{
-		"en"		"Show all maps"
+		"en"		"Show All Maps"
 	}
 	"Replay Menu - Show Current Map"
 	{
 		// Show kz_map only
 		"#format"	"{1:s}"
-		"en"		"Show {1} only"
+		"en"		"Show {1} Only"
 	}
 	"Replay Menu - Map Item"
 	{
@@ -272,7 +272,7 @@
 	"Replay Info - Wrong Map"
 	{
 		"#format"	"{1:s}"
-		"en"		"Recorded on {1}. Switch to that map, or use !replay <code> there, to watch it."
+		"en"		"Recorded on {1}. Switch to that map to watch it."
 	}
 	"Replay Info - Unknown Map"
 	{
@@ -284,11 +284,7 @@
 	}
 	"Replay Info - Download URL"
 	{
-		"en"		"Download URL (to console)"
-	}
-	"Replay Info - Back"
-	{
-		"en"		"Back"
+		"en"		"Print Download URL"
 	}
 	"Replay Store - Check Console"
 	{
@@ -301,7 +297,7 @@
 	}
 	"Replay Info - Output Code"
 	{
-		"en"		"Output Code"
+		"en"		"Print Code"
 	}
 	"Replay Info - Code Chat"
 	{

@@ -141,6 +141,28 @@ void OpenParentReplayMenu(int client, ReplayMenu kind)
 	OpenReplayMenu(client, parent);
 }
 
+void ReplayMenu_HandleClose(Menu menu, MenuAction action, int client, int reason, ReplayMenu kind)
+{
+	if (action == MenuAction_End)
+	{
+		delete menu;
+		return;
+	}
+	if (action != MenuAction_Cancel)
+	{
+		return;
+	}
+	if (reason == MenuCancel_ExitBack)
+	{
+		OpenParentReplayMenu(client, kind);
+		return;
+	}
+	if (reason == MenuCancel_Exit)
+	{
+		currentMenu[client] = ReplayMenu_None;
+	}
+}
+
 void ReplayMenu_SetCurrent(int client, ReplayMenu kind)
 {
 	currentMenu[client] = kind;
@@ -239,14 +261,7 @@ public int MenuHandler_ReplayHub(Menu menu, MenuAction action, int param1, int p
 		menu.GetItem(param2, info, sizeof(info));
 		SelectHubItem(param1, info);
 	}
-	else if (action == MenuAction_Cancel && param2 == MenuCancel_Exit)
-	{
-		currentMenu[param1] = ReplayMenu_None;
-	}
-	else if (action == MenuAction_End)
-	{
-		delete menu;
-	}
+	ReplayMenu_HandleClose(menu, action, param1, param2, ReplayMenu_Hub);
 	return 0;
 }
 
@@ -259,14 +274,7 @@ public int MenuHandler_ReplayMaps(Menu menu, MenuAction action, int param1, int 
 		strcopy(scopeMap[param1], sizeof(scopeMap[]), map);
 		OpenReplayMenu(param1, ReplayMenu_RunModes);
 	}
-	else if (action == MenuAction_Cancel && param2 == MenuCancel_Exit)
-	{
-		OpenParentReplayMenu(param1, ReplayMenu_RunMaps);
-	}
-	else if (action == MenuAction_End)
-	{
-		delete menu;
-	}
+	ReplayMenu_HandleClose(menu, action, param1, param2, ReplayMenu_RunMaps);
 	return 0;
 }
 
@@ -277,14 +285,7 @@ public int MenuHandler_RunModes(Menu menu, MenuAction action, int param1, int pa
 		listMode[param1] = param2;
 		OpenReplayMenu(param1, ReplayMenu_RunCourses);
 	}
-	else if (action == MenuAction_Cancel && param2 == MenuCancel_Exit)
-	{
-		OpenParentReplayMenu(param1, ReplayMenu_RunModes);
-	}
-	else if (action == MenuAction_End)
-	{
-		delete menu;
-	}
+	ReplayMenu_HandleClose(menu, action, param1, param2, ReplayMenu_RunModes);
 	return 0;
 }
 
@@ -297,14 +298,7 @@ public int MenuHandler_RunCourses(Menu menu, MenuAction action, int param1, int 
 		listCourse[param1] = StringToInt(info);
 		OpenReplayMenu(param1, ReplayMenu_RunList);
 	}
-	else if (action == MenuAction_Cancel && param2 == MenuCancel_Exit)
-	{
-		OpenParentReplayMenu(param1, ReplayMenu_RunCourses);
-	}
-	else if (action == MenuAction_End)
-	{
-		delete menu;
-	}
+	ReplayMenu_HandleClose(menu, action, param1, param2, ReplayMenu_RunCourses);
 	return 0;
 }
 
@@ -315,14 +309,7 @@ public int MenuHandler_JumpModes(Menu menu, MenuAction action, int param1, int p
 		listMode[param1] = param2;
 		OpenReplayMenu(param1, ReplayMenu_JumpTypes);
 	}
-	else if (action == MenuAction_Cancel && param2 == MenuCancel_Exit)
-	{
-		OpenParentReplayMenu(param1, ReplayMenu_JumpModes);
-	}
-	else if (action == MenuAction_End)
-	{
-		delete menu;
-	}
+	ReplayMenu_HandleClose(menu, action, param1, param2, ReplayMenu_JumpModes);
 	return 0;
 }
 
@@ -335,14 +322,7 @@ public int MenuHandler_JumpTypes(Menu menu, MenuAction action, int param1, int p
 		listJumpType[param1] = StringToInt(info);
 		OpenReplayMenu(param1, ReplayMenu_JumpList);
 	}
-	else if (action == MenuAction_Cancel && param2 == MenuCancel_Exit)
-	{
-		OpenParentReplayMenu(param1, ReplayMenu_JumpTypes);
-	}
-	else if (action == MenuAction_End)
-	{
-		delete menu;
-	}
+	ReplayMenu_HandleClose(menu, action, param1, param2, ReplayMenu_JumpTypes);
 	return 0;
 }
 
@@ -372,6 +352,7 @@ void DisplayReplayMapMenu(int client, ArrayList maps)
 		FormatEx(display, sizeof(display), "%T", "Replay Menu - Map Item", client, entry.name, entry.count);
 		menu.AddItem(entry.name, display);
 	}
+	menu.ExitBackButton = true;
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -397,6 +378,7 @@ void DisplayRunCourseMenu(int client, ArrayList courses)
 		FormatCourseName(client, course, display, sizeof(display));
 		menu.AddItem(IntToStringEx(course), display);
 	}
+	menu.ExitBackButton = true;
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -578,6 +560,7 @@ static void DisplayRunModeMenu(int client)
 	FormatRunSectionName(client, section, sizeof(section));
 	menu.SetTitle("%T", "Replay Menu (Mode) - Title", client, section, scopeMap[client]);
 	GOKZ_MenuAddModeItems(client, menu, false);
+	menu.ExitBackButton = true;
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -591,6 +574,7 @@ static void DisplayJumpModeMenu(int client)
 	ReplayScope_FormatName(client, scopeName, sizeof(scopeName));
 	menu.SetTitle("%T", "Replay Menu (Mode) - Title", client, section, scopeName);
 	GOKZ_MenuAddModeItems(client, menu, false);
+	menu.ExitBackButton = true;
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -607,5 +591,6 @@ static void DisplayJumpTypeMenu(int client)
 	{
 		menu.AddItem(IntToStringEx(jumpType), gC_JumpTypes[jumpType]);
 	}
+	menu.ExitBackButton = true;
 	menu.Display(client, MENU_TIME_FOREVER);
 }

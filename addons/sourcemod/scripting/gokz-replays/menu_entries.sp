@@ -4,10 +4,9 @@
 
 
 
-#define ENTRY_PANEL_ITEM_WATCH 1
-#define ENTRY_PANEL_ITEM_CODE 2
-#define ENTRY_PANEL_ITEM_URL 3
-#define ENTRY_PANEL_ITEM_BACK 4
+#define ITEM_INFO_ENTRY_WATCH "watch"
+#define ITEM_INFO_ENTRY_CODE "code"
+#define ITEM_INFO_ENTRY_URL "url"
 
 static ArrayList g_Entries[MAXPLAYERS + 1];
 static int selectedEntry[MAXPLAYERS + 1];
@@ -39,6 +38,7 @@ void DisplayReplayEntries(int client, ReplayMenu kind, ArrayList entries, int re
 		int index = g_Entries[client].PushArray(entry);
 		menu.AddItem(IntToStringEx(index), display);
 	}
+	menu.ExitBackButton = true;
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -64,39 +64,30 @@ public int MenuHandler_ReplayEntries(Menu menu, MenuAction action, int param1, i
 		menu.GetItem(param2, info, sizeof(info));
 		SelectEntry(param1, StringToInt(info));
 	}
+	ReplayMenu_HandleClose(menu, action, param1, param2, ReplayMenu_GetCurrent(param1));
+	return 0;
+}
+
+public int MenuHandler_ReplayInfo(Menu menu, MenuAction action, int param1, int param2)
+{
+	if (action == MenuAction_Select)
+	{
+		char info[8];
+		menu.GetItem(param2, info, sizeof(info));
+		SelectInfoItem(param1, info);
+	}
+	else if (action == MenuAction_Cancel && param2 == MenuCancel_ExitBack)
+	{
+		ReopenReplayMenu(param1);
+	}
 	else if (action == MenuAction_Cancel && param2 == MenuCancel_Exit)
 	{
-		OpenParentReplayMenu(param1, ReplayMenu_GetCurrent(param1));
+		ReplayMenu_SetCurrent(param1, ReplayMenu_None);
 	}
 	else if (action == MenuAction_End)
 	{
 		delete menu;
 	}
-	return 0;
-}
-
-public int PanelHandler_ReplayInfo(Menu menu, MenuAction action, int param1, int param2)
-{
-	if (action != MenuAction_Select)
-	{
-		return 0;
-	}
-	if (param2 == ENTRY_PANEL_ITEM_WATCH)
-	{
-		WatchSelectedEntry(param1);
-		return 0;
-	}
-	if (param2 == ENTRY_PANEL_ITEM_CODE)
-	{
-		PrintSelectedEntryCode(param1);
-		return 0;
-	}
-	if (param2 == ENTRY_PANEL_ITEM_URL)
-	{
-		PrintSelectedEntryUrl(param1);
-		return 0;
-	}
-	ReopenReplayMenu(param1);
 	return 0;
 }
 
@@ -315,6 +306,22 @@ static void SelectEntry(int client, int index)
 	ShowEntryInfo(client, entry);
 }
 
+static void SelectInfoItem(int client, const char[] info)
+{
+	if (StrEqual(info, ITEM_INFO_ENTRY_WATCH))
+	{
+		WatchSelectedEntry(client);
+	}
+	else if (StrEqual(info, ITEM_INFO_ENTRY_CODE))
+	{
+		PrintSelectedEntryCode(client);
+	}
+	else if (StrEqual(info, ITEM_INFO_ENTRY_URL))
+	{
+		PrintSelectedEntryUrl(client);
+	}
+}
+
 static void WatchSelectedEntry(int client)
 {
 	ReplayEntry entry;
@@ -359,85 +366,79 @@ static void PrintSelectedEntryCode(int client)
 
 static void ShowEntryInfo(int client, ReplayEntry entry)
 {
-	Panel panel = new Panel();
-	char line[128];
+	char title[512];
+	FormatEntryInfoTitle(client, entry, title, sizeof(title));
+	Menu menu = new Menu(MenuHandler_ReplayInfo);
+	menu.SetTitle("%s", title);
 
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Title", client);
-	panel.SetTitle(line);
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Player", client, entry.alias);
-	panel.DrawText(line);
+	char display[64];
+	bool onThisMap = IsEntryOnThisMap(entry);
+	FormatEx(display, sizeof(display), "%T", "Replay Info - Watch", client);
+	menu.AddItem(ITEM_INFO_ENTRY_WATCH, display, onThisMap ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
+	FormatEx(display, sizeof(display), "%T", "Replay Info - Output Code", client);
+	menu.AddItem(ITEM_INFO_ENTRY_CODE, display);
+	bool canDownload = CanDownloadEntry(entry);
+	FormatEx(display, sizeof(display), "%T", "Replay Info - Download URL", client);
+	menu.AddItem(ITEM_INFO_ENTRY_URL, display, canDownload ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
+	menu.ExitBackButton = true;
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+static void FormatEntryInfoTitle(int client, ReplayEntry entry, char[] title, int maxlength)
+{
 	char mapName[64];
 	FormatEntryMapName(client, entry, mapName, sizeof(mapName));
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Map", client, mapName);
-	panel.DrawText(line);
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Mode", client, gC_ModeNames[entry.mode]);
-	panel.DrawText(line);
+	char record[256];
 	if (entry.replayType == ReplayType_Run)
 	{
-		DrawRunInfo(client, panel, entry);
+		FormatRunInfo(client, entry, record, sizeof(record));
 	}
 	else
 	{
-		DrawJumpInfo(client, panel, entry);
+		FormatJumpInfo(client, entry, record, sizeof(record));
 	}
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Recorded", client, entry.created);
-	panel.DrawText(line);
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Code", client, entry.code);
-	panel.DrawText(line);
-	panel.DrawText(" ");
-	bool onThisMap = IsEntryOnThisMap(entry);
-	if (!onThisMap)
-	{
-		FormatEx(line, sizeof(line), "%T", "Replay Info - Wrong Map", client, entry.mapName);
-		panel.DrawText(line);
-		panel.DrawText(" ");
-	}
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Watch", client);
-	panel.DrawItem(line, onThisMap ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Output Code", client);
-	panel.DrawItem(line);
-	bool canDownload = CanDownloadEntry(entry);
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Download URL", client);
-	panel.DrawItem(line, canDownload ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Back", client);
-	panel.DrawItem(line);
 
-	panel.Send(client, PanelHandler_ReplayInfo, MENU_TIME_FOREVER);
-	delete panel;
+	FormatEx(title, maxlength, "%T\n \n%T\n%T\n%T\n%s\n%T\n%T\n ",
+		"Replay Info - Title", client,
+		"Replay Info - Player", client, entry.alias,
+		"Replay Info - Map", client, mapName,
+		"Replay Info - Mode", client, gC_ModeNames[entry.mode],
+		record,
+		"Replay Info - Recorded", client, entry.created,
+		"Replay Info - Code", client, entry.code);
+	if (IsEntryOnThisMap(entry))
+	{
+		return;
+	}
+	Format(title, maxlength, "%s\n%T\n ", title, "Replay Info - Wrong Map", client, entry.mapName);
 }
 
-static void DrawRunInfo(int client, Panel panel, ReplayEntry entry)
+static void FormatRunInfo(int client, ReplayEntry entry, char[] buffer, int maxlength)
 {
-	char line[128];
 	char courseName[32];
 	FormatCourseName(client, entry.course, courseName, sizeof(courseName));
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Course", client, courseName);
-	panel.DrawText(line);
-
 	int timeType = GOKZ_GetTimeTypeEx(entry.teleports);
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Run", client, GOKZ_FormatTime(GOKZ_DB_TimeIntToFloat(entry.runTimeMS)), gC_TimeTypeNames[timeType], entry.teleports);
-	panel.DrawText(line);
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Rank", client, entry.rank, gC_TimeTypeNames[timeType]);
-	panel.DrawText(line);
+	FormatEx(buffer, maxlength, "%T\n%T\n%T",
+		"Replay Info - Course", client, courseName,
+		"Replay Info - Run", client, GOKZ_FormatTime(GOKZ_DB_TimeIntToFloat(entry.runTimeMS)), gC_TimeTypeNames[timeType], entry.teleports,
+		"Replay Info - Rank", client, entry.rank, gC_TimeTypeNames[timeType]);
 }
 
-static void DrawJumpInfo(int client, Panel panel, ReplayEntry entry)
+static void FormatJumpInfo(int client, ReplayEntry entry, char[] buffer, int maxlength)
 {
-	char line[128];
+	char jump[128];
 	float distance = float(entry.distance) / GOKZ_DB_JS_DISTANCE_PRECISION;
 	if (entry.block > 0)
 	{
-		FormatEx(line, sizeof(line), "%T", "Replay Info - Block Jump", client, gC_JumpTypes[entry.jumpType], entry.block, distance);
+		FormatEx(jump, sizeof(jump), "%T", "Replay Info - Block Jump", client, gC_JumpTypes[entry.jumpType], entry.block, distance);
 	}
 	else
 	{
-		FormatEx(line, sizeof(line), "%T", "Replay Info - Jump", client, gC_JumpTypes[entry.jumpType], distance);
+		FormatEx(jump, sizeof(jump), "%T", "Replay Info - Jump", client, gC_JumpTypes[entry.jumpType], distance);
 	}
-	panel.DrawText(line);
 
 	float sync = float(entry.sync) / GOKZ_DB_JS_SYNC_PRECISION;
 	float pre = float(entry.pre) / GOKZ_DB_JS_PRE_PRECISION;
 	float max = float(entry.max) / GOKZ_DB_JS_MAX_PRECISION;
-	FormatEx(line, sizeof(line), "%T", "Replay Info - Jump Stats", client, entry.strafes, sync, pre, max);
-	panel.DrawText(line);
+	FormatEx(buffer, maxlength, "%s\n%T", jump, "Replay Info - Jump Stats", client, entry.strafes, sync, pre, max);
 }
