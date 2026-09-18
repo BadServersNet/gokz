@@ -39,7 +39,8 @@ enum
 {
 	ReplayDB_Lookup_ObjectKey = 0,
 	ReplayDB_Lookup_FileSize,
-	ReplayDB_Lookup_InStore
+	ReplayDB_Lookup_InStore,
+	ReplayDB_Lookup_MapName
 };
 
 enum
@@ -344,7 +345,7 @@ native bool GOKZ_RP_UpdateReplayControlMenu(int client);
  * @param replayType		The type of the replay (Run/Jump/Cheater).
  * @param recordID			TimeID for runs, JumpID for jumps, 0 for cheater replays.
  * @param steamID			SteamID32 of the player.
- * @param map				Map name used in the object key.
+ * @param map				Map name used in the object key and stored as the replay's map.
  * @param timestamp			Unix timestamp used in jump and cheater keys.
  * @param mode				Movement mode used in cheater keys.
  * @param style				Movement style used in cheater keys.

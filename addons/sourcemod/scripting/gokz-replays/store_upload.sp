@@ -10,8 +10,6 @@
 enum struct UploadJob
 {
 	char objectKey[RP_MAX_KEY_LENGTH];
-	char cachePath[PLATFORM_MAX_PATH];
-	char markerPath[PLATFORM_MAX_PATH];
 	int replayType;
 	int recordID;
 	int steamID;
@@ -23,6 +21,7 @@ enum struct UploadJob
 }
 
 static ArrayList g_UploadQueue;
+static StringMap g_QueuedKeys;
 static bool g_UploadInFlight;
 static int g_UploadToken;
 static Handle g_UploadBackoffTimer;
@@ -33,25 +32,29 @@ static int g_UploadLastStatus;
 
 // =====[ PUBLIC ]=====
 
-void Store_EnqueueUpload(const char[] key, int replayType, int recordID, int steamID)
+void Store_EnqueueUpload(const char[] key, int replayType, int recordID, int steamID, const char[] map)
 {
+	char cachePath[PLATFORM_MAX_PATH];
+	KeyToCachePath(key, cachePath, sizeof(cachePath));
+	char markerPath[PLATFORM_MAX_PATH];
+	KeyToMarkerPath(key, markerPath, sizeof(markerPath));
+
 	UploadJob job;
 	strcopy(job.objectKey, sizeof(UploadJob::objectKey), key);
-	KeyToCachePath(key, job.cachePath, sizeof(UploadJob::cachePath));
-	KeyToMarkerPath(key, job.markerPath, sizeof(UploadJob::markerPath));
 	job.replayType = replayType;
 	job.recordID = recordID;
 	job.steamID = steamID;
-	job.fileSize = FileSize(job.cachePath);
-	ReadReplayMap(job.cachePath, job.map, sizeof(UploadJob::map));
+	job.fileSize = FileSize(cachePath);
+	strcopy(job.map, sizeof(UploadJob::map), map);
 
-	CreateMarker(job.markerPath);
-	if (FindQueuedUpload(key) != -1)
+	CreateMarker(markerPath);
+	if (IsUploadQueued(key))
 	{
 		LogMessage("Replay upload of \"%s\" is already queued.", key);
 		return;
 	}
 	g_UploadQueue.PushArray(job);
+	g_QueuedKeys.SetValue(key, true);
 	LogMessage("Queued replay upload \"%s\" (type %d, record %d, steamid %d, map %s, %d bytes, %d queued).", key, replayType, recordID, steamID, job.map, job.fileSize, g_UploadQueue.Length);
 	TryStartNextUpload();
 }
@@ -73,7 +76,7 @@ bool Store_ImportReplay(const char[] sourcePath, int replayType, int recordID, i
 	}
 
 	LogMessage("Imported replay \"%s\" as \"%s\".", sourcePath, key);
-	Store_EnqueueUpload(key, replayType, recordID, steamID);
+	Store_EnqueueUpload(key, replayType, recordID, steamID, map);
 	return true;
 }
 
@@ -90,12 +93,15 @@ int Store_ClearUploadQueue()
 		UploadJob job;
 		g_UploadQueue.GetArray(i, job);
 		LogMessage("Dropping queued replay upload \"%s\" and its outbox marker.", job.objectKey);
-		if (FileExists(job.markerPath))
+		char markerPath[PLATFORM_MAX_PATH];
+		KeyToMarkerPath(job.objectKey, markerPath, sizeof(markerPath));
+		if (FileExists(markerPath))
 		{
-			DeleteFile(job.markerPath);
+			DeleteFile(markerPath);
 		}
 	}
 	g_UploadQueue.Clear();
+	g_QueuedKeys.Clear();
 	g_UploadInFlight = false;
 	KillBackoffTimer();
 	LogMessage("Cleared the replay upload queue (%d uploads dropped).", dropped);
@@ -152,6 +158,7 @@ void Store_OnClientReady()
 void OnPluginStart_StoreUpload()
 {
 	g_UploadQueue = new ArrayList(sizeof(UploadJob));
+	g_QueuedKeys = new StringMap();
 	g_UploadBackoffTimer = INVALID_HANDLE;
 }
 
@@ -187,8 +194,8 @@ public void OnUploadCompleted(S3Client client, S3Response response, any token)
 		char etag[64];
 		response.GetETag(etag, sizeof(etag));
 		LogMessage("Replay upload of \"%s\" succeeded (HTTP %d, %d bytes, etag %s, %d left in queue).", job.objectKey, response.HttpStatus, job.fileSize, etag, g_UploadQueue.Length - 1);
-		DB_InsertReplay(job.replayType, job.recordID, job.steamID, job.objectKey, job.fileSize, true, job.map, job.markerPath);
-		g_UploadQueue.Erase(0);
+		DB_InsertReplay(job.replayType, job.recordID, job.steamID, job.objectKey, job.fileSize, true, job.map);
+		DequeueFirstUpload(job);
 		TryStartNextUpload();
 		return;
 	}
@@ -204,7 +211,7 @@ public void OnUploadCompleted(S3Client client, S3Response response, any token)
 	if (parkJob)
 	{
 		LogError("Replay upload of \"%s\" is parked until the next map change or sm_replaystore_flush.", job.objectKey);
-		g_UploadQueue.Erase(0);
+		DequeueFirstUpload(job);
 		TryStartNextUpload();
 		return;
 	}
@@ -233,12 +240,9 @@ static void TryStartNextUpload()
 		return;
 	}
 
-	UploadJob job;
-	g_UploadQueue.GetArray(0, job);
-
 	if (!Store_IsEnabled())
 	{
-		RegisterLocally(job);
+		RegisterQueueLocally();
 		return;
 	}
 	if (gH_S3 == null)
@@ -247,12 +251,16 @@ static void TryStartNextUpload()
 		return;
 	}
 
+	UploadJob job;
+	g_UploadQueue.GetArray(0, job);
 	g_UploadToken++;
 	job.token = g_UploadToken;
 	g_UploadQueue.SetArray(0, job);
 	g_UploadInFlight = true;
-	LogMessage("Starting replay upload of \"%s\" from \"%s\" (%d bytes, attempt %d, %d queued).", job.objectKey, job.cachePath, job.fileSize, job.attempt + 1, g_UploadQueue.Length);
-	gH_S3.PutFile(job.objectKey, job.cachePath, OnUploadCompleted, job.token);
+	char cachePath[PLATFORM_MAX_PATH];
+	KeyToCachePath(job.objectKey, cachePath, sizeof(cachePath));
+	LogMessage("Starting replay upload of \"%s\" from \"%s\" (%d bytes, attempt %d, %d queued).", job.objectKey, cachePath, job.fileSize, job.attempt + 1, g_UploadQueue.Length);
+	gH_S3.PutFile(job.objectKey, cachePath, OnUploadCompleted, job.token);
 }
 
 static bool FormatImportKey(char[] key, int maxlength, int replayType, int recordID, int steamID, const char[] map, int timestamp, int mode, int style)
@@ -271,6 +279,12 @@ static bool FormatImportKey(char[] key, int maxlength, int replayType, int recor
 		}
 		case ReplayType_Cheater:
 		{
+			bool validMode = mode >= 0 && mode < MODE_COUNT;
+			bool validStyle = style >= 0 && style < STYLE_COUNT;
+			if (!validMode || !validStyle)
+			{
+				return false;
+			}
 			FormatCheaterKey(key, maxlength, steamID, timestamp, map, mode, style);
 			return true;
 		}
@@ -278,17 +292,18 @@ static bool FormatImportKey(char[] key, int maxlength, int replayType, int recor
 	return false;
 }
 
-static void RegisterLocally(UploadJob job)
+static void RegisterQueueLocally()
 {
 	int registered = 0;
 	for (int i = 0; i < g_UploadQueue.Length; i++)
 	{
+		UploadJob job;
 		g_UploadQueue.GetArray(i, job);
 		if (job.registeredLocally)
 		{
 			continue;
 		}
-		DB_InsertReplay(job.replayType, job.recordID, job.steamID, job.objectKey, job.fileSize, false, job.map, "");
+		DB_InsertReplay(job.replayType, job.recordID, job.steamID, job.objectKey, job.fileSize, false, job.map);
 		job.registeredLocally = true;
 		g_UploadQueue.SetArray(i, job);
 		registered++;
@@ -299,28 +314,16 @@ static void RegisterLocally(UploadJob job)
 	}
 }
 
-static void ReadReplayMap(const char[] cachePath, char[] buffer, int maxlength)
+static bool IsUploadQueued(const char[] key)
 {
-	int replayType;
-	int steamID;
-	if (!ReadReplayFileInfo(cachePath, replayType, steamID, buffer, maxlength))
-	{
-		strcopy(buffer, maxlength, gC_CurrentMap);
-	}
+	bool queued;
+	return g_QueuedKeys.GetValue(key, queued);
 }
 
-static int FindQueuedUpload(const char[] key)
+static void DequeueFirstUpload(UploadJob job)
 {
-	for (int i = 0; i < g_UploadQueue.Length; i++)
-	{
-		UploadJob job;
-		g_UploadQueue.GetArray(i, job);
-		if (StrEqual(job.objectKey, key))
-		{
-			return i;
-		}
-	}
-	return -1;
+	g_UploadQueue.Erase(0);
+	g_QueuedKeys.Remove(job.objectKey);
 }
 
 static void CreateMarker(const char[] markerPath)
@@ -382,15 +385,13 @@ static void EnqueueMarker(const char[] fileName)
 	{
 		return;
 	}
-	if (FindQueuedUpload(key) != -1)
+	if (IsUploadQueued(key))
 	{
 		return;
 	}
 
 	char cachePath[PLATFORM_MAX_PATH];
 	KeyToCachePath(key, cachePath, sizeof(cachePath));
-	char markerPath[PLATFORM_MAX_PATH];
-	KeyToMarkerPath(key, markerPath, sizeof(markerPath));
 
 	int replayType;
 	int steamID;
@@ -398,10 +399,13 @@ static void EnqueueMarker(const char[] fileName)
 	if (!FileExists(cachePath) || !ReadReplayFileInfo(cachePath, replayType, steamID, mapName, sizeof(mapName)))
 	{
 		LogError("Replay outbox marker \"%s\" has no readable replay file; removing it.", fileName);
+		char markerPath[PLATFORM_MAX_PATH];
+		KeyToMarkerPath(key, markerPath, sizeof(markerPath));
 		DeleteFile(markerPath);
 		return;
 	}
 
+	ParseRunKeyMap(key, mapName, sizeof(mapName));
 	int recordID = ParseKeyRecordID(key);
-	Store_EnqueueUpload(key, replayType, recordID, steamID);
+	Store_EnqueueUpload(key, replayType, recordID, steamID, mapName);
 }

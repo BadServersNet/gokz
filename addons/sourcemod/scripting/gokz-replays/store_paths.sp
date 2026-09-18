@@ -4,6 +4,10 @@
 
 
 
+static bool g_PurgedOnBoot;
+
+
+
 // =====[ PUBLIC ]=====
 
 void FormatRunKey(char[] buffer, int maxlength, const char[] map, int timeID)
@@ -73,6 +77,18 @@ int ParseKeyRecordID(const char[] key)
 	return StringToInt(key[lastSlash + 1]);
 }
 
+void ParseRunKeyMap(const char[] key, char[] map, int maxlength)
+{
+	char parts[3][RP_MAX_KEY_LENGTH];
+	int count = ExplodeString(key, "/", parts, sizeof(parts), sizeof(parts[]));
+	bool isRunKey = count == 3 && StrEqual(parts[0], RP_KEY_PREFIX_RUNS);
+	if (!isRunKey)
+	{
+		return;
+	}
+	strcopy(map, maxlength, parts[1]);
+}
+
 void EnsureDirectoryForPath(const char[] filePath)
 {
 	char path[PLATFORM_MAX_PATH];
@@ -99,8 +115,6 @@ void EnsureStoreDirectories()
 	EnsureStoreDirectory(RP_DIRECTORY_OUTBOX);
 	EnsureStoreDirectory(RP_DIRECTORY_STAGING);
 }
-
-static bool g_PurgedOnBoot;
 
 void Store_PurgeUploadedCacheOnBoot()
 {

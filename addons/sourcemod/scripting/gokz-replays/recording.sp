@@ -454,7 +454,7 @@ static bool SaveRecordingOfCheater(int client, ACReason reason)
 
 	delete file;
 
-	Store_EnqueueUpload(key, ReplayType_Cheater, 0, steamID);
+	Store_EnqueueUpload(key, ReplayType_Cheater, 0, steamID, gC_CurrentMap);
 	return true;
 }
 
@@ -509,7 +509,7 @@ static bool SaveRecordingOfJump(int client, int jumptype, float distance, int bl
 
 	delete file;
 
-	Store_EnqueueUpload(key, ReplayType_Jump, jumpID, steamID);
+	Store_EnqueueUpload(key, ReplayType_Jump, jumpID, steamID, gC_CurrentMap);
 	return true;
 }
 

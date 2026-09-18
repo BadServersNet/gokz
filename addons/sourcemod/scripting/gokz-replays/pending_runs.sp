@@ -220,7 +220,7 @@ static void FinalizeRun(int index)
 	}
 
 	int steamID = GetSteamAccountID(client);
-	Store_EnqueueUpload(key, ReplayType_Run, run.timeID, steamID);
+	Store_EnqueueUpload(key, ReplayType_Run, run.timeID, steamID, gC_CurrentMap);
 	Progress_OnRunReplaySaved(client, run.course, run.time, cachePath);
 	FireReplaySavedForwards(client, run, cachePath);
 }

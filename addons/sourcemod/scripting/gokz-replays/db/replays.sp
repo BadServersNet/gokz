@@ -28,6 +28,18 @@ enum struct ReplayEntry
 	int rank;
 }
 
+enum struct ReplayInsert
+{
+	int replayType;
+	int recordID;
+	int steamID;
+	char objectKey[RP_MAX_KEY_LENGTH];
+	int fileSize;
+	bool inStore;
+	char mapName[64];
+	int attempt;
+}
+
 enum struct ReplayMapEntry
 {
 	char name[64];
@@ -38,36 +50,31 @@ enum struct ReplayMapEntry
 
 // =====[ PUBLIC ]=====
 
-void DB_InsertReplay(int replayType, int recordID, int steamID, const char[] objectKey, int fileSize, bool inStore, const char[] mapName, const char[] markerPath)
+void DB_InsertReplay(int replayType, int recordID, int steamID, const char[] objectKey, int fileSize, bool inStore, const char[] mapName)
 {
-	DataPack data = new DataPack();
-	data.WriteCell(replayType);
-	data.WriteCell(recordID);
-	data.WriteCell(steamID);
-	data.WriteString(objectKey);
-	data.WriteCell(fileSize);
-	data.WriteCell(inStore);
-	data.WriteString(mapName);
-	data.WriteString(markerPath);
-	data.WriteCell(1);
-	InsertReplayAttempt(data);
+	ReplayInsert insert;
+	insert.replayType = replayType;
+	insert.recordID = recordID;
+	insert.steamID = steamID;
+	strcopy(insert.objectKey, sizeof(ReplayInsert::objectKey), objectKey);
+	insert.fileSize = fileSize;
+	insert.inStore = inStore;
+	strcopy(insert.mapName, sizeof(ReplayInsert::mapName), mapName);
+	insert.attempt = 1;
+	InsertReplayAttempt(insert);
 }
 
 void DB_LookupReplayByCode(int client, const char[] code)
 {
-	char codeEscaped[RP_CODE_BUFFER * 2 + 1];
-	SQL_EscapeString(gH_DB, code, codeEscaped, sizeof(codeEscaped));
 	char query[512];
-	FormatEx(query, sizeof(query), sql_replays_getbycode, codeEscaped);
+	FormatCodeLookupQuery(code, query, sizeof(query));
 	LookupReplay(client, query);
 }
 
 void DB_PrintUrlForCode(int client, const char[] code)
 {
-	char codeEscaped[RP_CODE_BUFFER * 2 + 1];
-	SQL_EscapeString(gH_DB, code, codeEscaped, sizeof(codeEscaped));
 	char query[512];
-	FormatEx(query, sizeof(query), sql_replays_getbycode, codeEscaped);
+	FormatCodeLookupQuery(code, query, sizeof(query));
 
 	DataPack data = new DataPack();
 	data.WriteCell(client == 0 ? 0 : GetClientUserId(client));
@@ -261,77 +268,45 @@ void DB_PrintRecentReplayKeys(int client)
 
 public void DB_TxnSuccess_InsertReplay(Handle db, DataPack data, int numQueries, Handle[] results, any[] queryData)
 {
-	data.Reset();
-	int replayType = data.ReadCell();
-	data.ReadCell();
-	int steamID = data.ReadCell();
-	char objectKey[RP_MAX_KEY_LENGTH];
-	data.ReadString(objectKey, sizeof(objectKey));
-	data.ReadCell();
-	data.ReadCell();
-	char mapName[64];
-	data.ReadString(mapName, sizeof(mapName));
-	char markerPath[PLATFORM_MAX_PATH];
-	data.ReadString(markerPath, sizeof(markerPath));
-	delete data;
+	ReplayInsert insert;
+	UnpackReplayInsert(data, insert);
 
-	if (markerPath[0] != '\0' && FileExists(markerPath))
+	if (insert.inStore)
 	{
-		DeleteFile(markerPath);
+		DeleteOutboxMarker(insert.objectKey);
 	}
 
 	Handle codeResult = results[numQueries - 1];
 	if (!SQL_FetchRow(codeResult))
 	{
-		LogMessage("Registered replay \"%s\" (type %d) but no code was returned.", objectKey, replayType);
+		LogError("Registered replay \"%s\" (type %d) but no code was returned.", insert.objectKey, insert.replayType);
 		return;
 	}
 	char code[RP_CODE_BUFFER];
 	SQL_FetchString(codeResult, 0, code, sizeof(code));
-	LogMessage("Registered replay \"%s\" (type %d, map %s, code %s).", objectKey, replayType, mapName, code);
+	LogMessage("Registered replay \"%s\" (type %d, map %s, code %s).", insert.objectKey, insert.replayType, insert.mapName, code);
 
-	if (replayType != ReplayType_Run)
+	if (insert.replayType != ReplayType_Run)
 	{
 		return;
 	}
-	AnnounceReplayCode(steamID, code);
+	AnnounceReplayCode(insert.steamID, code);
 }
 
 public void DB_TxnFailure_InsertReplay(Handle db, DataPack data, int numQueries, const char[] error, int failIndex, any[] queryData)
 {
-	data.Reset();
-	data.ReadCell();
-	data.ReadCell();
-	data.ReadCell();
-	char objectKey[RP_MAX_KEY_LENGTH];
-	data.ReadString(objectKey, sizeof(objectKey));
-	data.ReadCell();
-	data.ReadCell();
-	char mapName[64];
-	data.ReadString(mapName, sizeof(mapName));
-	char markerPath[PLATFORM_MAX_PATH];
-	data.ReadString(markerPath, sizeof(markerPath));
-	int attempt = data.ReadCell();
+	ReplayInsert insert;
+	UnpackReplayInsert(data, insert);
 
-	if (attempt >= RP_CODE_INSERT_ATTEMPTS)
+	if (insert.attempt >= RP_CODE_INSERT_ATTEMPTS)
 	{
-		delete data;
-		LogError("Failed to register replay \"%s\" after %d attempts: %s", objectKey, attempt, error);
+		LogError("Failed to register replay \"%s\" after %d attempts: %s", insert.objectKey, insert.attempt, error);
 		return;
 	}
-	LogMessage("Registering replay \"%s\" failed on attempt %d, retrying: %s", objectKey, attempt, error);
+	LogMessage("Registering replay \"%s\" failed on attempt %d, retrying: %s", insert.objectKey, insert.attempt, error);
 
-	data.Reset();
-	data.ReadCell();
-	data.ReadCell();
-	data.ReadCell();
-	data.ReadString(objectKey, sizeof(objectKey));
-	data.ReadCell();
-	data.ReadCell();
-	data.ReadString(mapName, sizeof(mapName));
-	data.ReadString(markerPath, sizeof(markerPath));
-	data.WriteCell(attempt + 1);
-	InsertReplayAttempt(data);
+	insert.attempt++;
+	InsertReplayAttempt(insert);
 }
 
 public void DB_TxnSuccess_PrintUrlForCode(Handle db, DataPack data, int numQueries, Handle[] results, any[] queryData)
@@ -372,6 +347,17 @@ public void DB_TxnSuccess_LookupReplay(Handle db, DataPack data, int numQueries,
 	if (!SQL_FetchRow(results[0]))
 	{
 		GOKZ_PrintToChat(client, true, "%t", "Replay Not Available");
+		GOKZ_PlayErrorSound(client);
+		Playback_OnFailed(client);
+		return;
+	}
+
+	char mapName[64];
+	SQL_FetchString(results[0], ReplayDB_Lookup_MapName, mapName, sizeof(mapName));
+	bool wrongMap = mapName[0] != '\0' && !StrEqual(mapName, gC_CurrentMap, false);
+	if (wrongMap)
+	{
+		GOKZ_PrintToChat(client, true, "%t", "Replay Menu - Wrong Map", mapName);
 		GOKZ_PlayErrorSound(client);
 		Playback_OnFailed(client);
 		return;
@@ -573,60 +559,98 @@ public void DB_TxnSuccess_PrintRecentReplayKeys(Handle db, DataPack data, int nu
 
 // =====[ PRIVATE ]=====
 
-static void InsertReplayAttempt(DataPack data)
+static void InsertReplayAttempt(ReplayInsert insert)
 {
-	data.Reset();
-	int replayType = data.ReadCell();
-	int recordID = data.ReadCell();
-	int steamID = data.ReadCell();
-	char objectKey[RP_MAX_KEY_LENGTH];
-	data.ReadString(objectKey, sizeof(objectKey));
-	int fileSize = data.ReadCell();
-	bool inStore = data.ReadCell();
-	char mapName[64];
-	data.ReadString(mapName, sizeof(mapName));
-
 	char timeIDValue[16] = "NULL";
 	char jumpIDValue[16] = "NULL";
 	char createdValue[128] = "CURRENT_TIMESTAMP";
-	if (replayType == ReplayType_Run)
+	if (insert.replayType == ReplayType_Run)
 	{
-		IntToString(recordID, timeIDValue, sizeof(timeIDValue));
-		FormatEx(createdValue, sizeof(createdValue), sql_replays_created_from_time, recordID);
+		IntToString(insert.recordID, timeIDValue, sizeof(timeIDValue));
+		FormatEx(createdValue, sizeof(createdValue), sql_replays_created_from_time, insert.recordID);
 	}
-	else if (replayType == ReplayType_Jump)
+	else if (insert.replayType == ReplayType_Jump)
 	{
-		IntToString(recordID, jumpIDValue, sizeof(jumpIDValue));
-		FormatEx(createdValue, sizeof(createdValue), sql_replays_created_from_jump, recordID);
+		IntToString(insert.recordID, jumpIDValue, sizeof(jumpIDValue));
+		FormatEx(createdValue, sizeof(createdValue), sql_replays_created_from_jump, insert.recordID);
 	}
 
 	char keyEscaped[RP_MAX_KEY_LENGTH * 2 + 1];
-	SQL_EscapeString(gH_DB, objectKey, keyEscaped, sizeof(keyEscaped));
+	SQL_EscapeString(gH_DB, insert.objectKey, keyEscaped, sizeof(keyEscaped));
 	char mapEscaped[129];
-	SQL_EscapeString(gH_DB, mapName, mapEscaped, sizeof(mapEscaped));
+	SQL_EscapeString(gH_DB, insert.mapName, mapEscaped, sizeof(mapEscaped));
 	char code[RP_CODE_BUFFER];
 	GenerateReplayCode(code, sizeof(code));
+	int inStoreValue = insert.inStore ? 1 : 0;
 
-	char query[1024];
+	char query[2048];
 	Transaction txn = SQL_CreateTransaction();
-	if (replayType == ReplayType_Jump)
+	if (insert.replayType == ReplayType_Jump)
 	{
-		FormatEx(query, sizeof(query), sql_replays_delete_by_jump, recordID);
+		FormatEx(query, sizeof(query), sql_replays_delete_by_jump, insert.recordID);
 		txn.AddQuery(query);
 	}
+	FormatEx(query, sizeof(query), sql_replays_update, insert.fileSize, inStoreValue, mapEscaped, createdValue, keyEscaped);
+	txn.AddQuery(query);
 	if (g_DBType == DatabaseType_SQLite)
 	{
-		FormatEx(query, sizeof(query), sqlite_replays_upsert, replayType, timeIDValue, jumpIDValue, steamID, keyEscaped, fileSize, inStore ? 1 : 0, mapEscaped, code, createdValue);
+		FormatEx(query, sizeof(query), sqlite_replays_insert, insert.replayType, timeIDValue, jumpIDValue, insert.steamID, keyEscaped, insert.fileSize, inStoreValue, mapEscaped, code, createdValue, keyEscaped);
 	}
 	else
 	{
-		FormatEx(query, sizeof(query), mysql_replays_upsert, replayType, timeIDValue, jumpIDValue, steamID, keyEscaped, fileSize, inStore ? 1 : 0, mapEscaped, code, createdValue);
+		FormatEx(query, sizeof(query), mysql_replays_insert, insert.replayType, timeIDValue, jumpIDValue, insert.steamID, keyEscaped, insert.fileSize, inStoreValue, mapEscaped, code, createdValue, keyEscaped);
 	}
 	txn.AddQuery(query);
 	FormatEx(query, sizeof(query), sql_replays_getcode, keyEscaped);
 	txn.AddQuery(query);
 
+	DataPack data = PackReplayInsert(insert);
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_InsertReplay, DB_TxnFailure_InsertReplay, data, DBPrio_Normal);
+}
+
+static DataPack PackReplayInsert(ReplayInsert insert)
+{
+	DataPack data = new DataPack();
+	data.WriteCell(insert.replayType);
+	data.WriteCell(insert.recordID);
+	data.WriteCell(insert.steamID);
+	data.WriteString(insert.objectKey);
+	data.WriteCell(insert.fileSize);
+	data.WriteCell(insert.inStore);
+	data.WriteString(insert.mapName);
+	data.WriteCell(insert.attempt);
+	return data;
+}
+
+static void UnpackReplayInsert(DataPack data, ReplayInsert insert)
+{
+	data.Reset();
+	insert.replayType = data.ReadCell();
+	insert.recordID = data.ReadCell();
+	insert.steamID = data.ReadCell();
+	data.ReadString(insert.objectKey, sizeof(ReplayInsert::objectKey));
+	insert.fileSize = data.ReadCell();
+	insert.inStore = data.ReadCell();
+	data.ReadString(insert.mapName, sizeof(ReplayInsert::mapName));
+	insert.attempt = data.ReadCell();
+	delete data;
+}
+
+static void DeleteOutboxMarker(const char[] objectKey)
+{
+	char markerPath[PLATFORM_MAX_PATH];
+	KeyToMarkerPath(objectKey, markerPath, sizeof(markerPath));
+	if (FileExists(markerPath))
+	{
+		DeleteFile(markerPath);
+	}
+}
+
+static void FormatCodeLookupQuery(const char[] code, char[] query, int maxlength)
+{
+	char codeEscaped[RP_CODE_BUFFER * 2 + 1];
+	SQL_EscapeString(gH_DB, code, codeEscaped, sizeof(codeEscaped));
+	FormatEx(query, maxlength, sql_replays_getbycode, codeEscaped);
 }
 
 static void AnnounceReplayCode(int steamID, const char[] code)

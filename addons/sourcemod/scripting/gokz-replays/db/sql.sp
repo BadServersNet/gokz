@@ -60,21 +60,27 @@ CREATE TABLE IF NOT EXISTS Replays ( \
     CONSTRAINT FK_Replays_JumpID FOREIGN KEY (JumpID) REFERENCES Jumpstats(JumpID) \
     ON UPDATE CASCADE ON DELETE CASCADE)";
 
-char sqlite_replays_upsert[] = "\
-INSERT INTO Replays (ReplayType, TimeID, JumpID, SteamID32, ObjectKey, FileSize, InStore, MapName, Code, Created) \
-    VALUES (%d, %s, %s, %d, '%s', %d, %d, '%s', '%s', %s) \
-    ON CONFLICT(ObjectKey) DO UPDATE SET FileSize=excluded.FileSize, InStore=excluded.InStore, MapName=excluded.MapName, Created=excluded.Created";
+char sql_replays_update[] = "\
+UPDATE Replays \
+    SET FileSize=%d, InStore=%d, MapName='%s', Created=%s \
+    WHERE ObjectKey='%s'";
 
-char mysql_replays_upsert[] = "\
+char sqlite_replays_insert[] = "\
 INSERT INTO Replays (ReplayType, TimeID, JumpID, SteamID32, ObjectKey, FileSize, InStore, MapName, Code, Created) \
-    VALUES (%d, %s, %s, %d, '%s', %d, %d, '%s', '%s', %s) \
-    ON DUPLICATE KEY UPDATE FileSize=VALUES(FileSize), InStore=VALUES(InStore), MapName=VALUES(MapName), Created=VALUES(Created)";
+    SELECT %d, %s, %s, %d, '%s', %d, %d, '%s', '%s', %s \
+    WHERE NOT EXISTS (SELECT 1 FROM Replays WHERE ObjectKey='%s')";
+
+char mysql_replays_insert[] = "\
+INSERT INTO Replays (ReplayType, TimeID, JumpID, SteamID32, ObjectKey, FileSize, InStore, MapName, Code, Created) \
+    SELECT %d, %s, %s, %d, '%s', %d, %d, '%s', '%s', %s \
+    FROM DUAL \
+    WHERE NOT EXISTS (SELECT 1 FROM Replays WHERE ObjectKey='%s')";
 
 char sql_replays_created_from_time[] = "COALESCE((SELECT Created FROM Times WHERE TimeID=%d), CURRENT_TIMESTAMP)";
 char sql_replays_created_from_jump[] = "COALESCE((SELECT Created FROM Jumpstats WHERE JumpID=%d), CURRENT_TIMESTAMP)";
 
 char sql_replays_getbycode[] = "\
-SELECT ObjectKey, FileSize, InStore \
+SELECT ObjectKey, FileSize, InStore, MapName \
     FROM Replays \
     WHERE Code='%s' \
     LIMIT 1";
@@ -211,14 +217,14 @@ SELECT " ... SQL_REPLAY_RUN_COLUMNS ... " \
     LIMIT 1";
 
 char sql_replays_getbytime[] = "\
-SELECT ObjectKey, FileSize, InStore \
+SELECT ObjectKey, FileSize, InStore, MapName \
     FROM Replays \
     WHERE TimeID=%d \
     ORDER BY ReplayID DESC \
     LIMIT 1";
 
 char sql_replays_getbyjump[] = "\
-SELECT ObjectKey, FileSize, InStore \
+SELECT ObjectKey, FileSize, InStore, MapName \
     FROM Replays \
     WHERE JumpID=%d \
     ORDER BY ReplayID DESC \
