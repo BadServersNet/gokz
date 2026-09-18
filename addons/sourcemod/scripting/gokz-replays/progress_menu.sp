@@ -14,6 +14,7 @@ enum struct ProgressRow
 }
 
 static bool progressMenuOpen[MAXPLAYERS + 1];
+static bool progressMenuRefreshing[MAXPLAYERS + 1];
 static Handle progressMenuTimer[MAXPLAYERS + 1];
 
 
@@ -69,11 +70,9 @@ public Action Timer_RefreshProgressMenu(Handle timer, any userid)
 
 public int PanelHandler_ProgressMenu(Menu menu, MenuAction action, int param1, int param2)
 {
-	if (action == MenuAction_Select && param2 == PROGRESS_MENU_ITEM_EXIT)
-	{
-		CloseProgressMenu(param1);
-	}
-	else if (action == MenuAction_Cancel && param2 == MenuCancel_Exit)
+	bool exitSelected = action == MenuAction_Select && param2 == PROGRESS_MENU_ITEM_EXIT;
+	bool replaced = action == MenuAction_Cancel && IsReplacedByOtherMenu(param1, param2);
+	if (exitSelected || replaced)
 	{
 		CloseProgressMenu(param1);
 	}
@@ -83,6 +82,15 @@ public int PanelHandler_ProgressMenu(Menu menu, MenuAction action, int param1, i
 
 
 // =====[ PRIVATE ]=====
+
+static bool IsReplacedByOtherMenu(int client, int reason)
+{
+	if (reason == MenuCancel_Exit)
+	{
+		return true;
+	}
+	return reason == MenuCancel_Interrupted && !progressMenuRefreshing[client];
+}
 
 static void CloseProgressMenu(int client)
 {
@@ -120,7 +128,9 @@ static void ShowProgressMenu(int client)
 	panel.DrawText(" ");
 	FormatEx(line, sizeof(line), "%T", "Progress Menu - Exit", client);
 	panel.DrawItem(line);
+	progressMenuRefreshing[client] = true;
 	panel.Send(client, PanelHandler_ProgressMenu, 2);
+	progressMenuRefreshing[client] = false;
 	delete panel;
 }
 
