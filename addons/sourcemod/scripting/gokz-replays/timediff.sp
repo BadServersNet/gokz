@@ -90,7 +90,7 @@ void TimeDiff_OnRunReplaySaved(int client, int course, float time, const char[] 
 	{
 		return;
 	}
-	int timeMS = RoundToNearest(time * 1000.0);
+	int timeMS = GOKZ_DB_TimeFloatToInt(time);
 	bool faster = !HasPBRoute(client) || timeMS < pbTimeMS[client];
 	if (!faster)
 	{

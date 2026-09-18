@@ -159,7 +159,7 @@ void Progress_OnRunReplaySaved(int client, int course, float time, const char[] 
 	{
 		return;
 	}
-	int timeMS = RoundToNearest(time * 1000.0);
+	int timeMS = GOKZ_DB_TimeFloatToInt(time);
 	bool faster = !HasServerRoute() || timeMS < g_RouteTimeMS;
 	if (!faster)
 	{
@@ -511,7 +511,7 @@ static int FindPreferredWithinTolerance(ArrayList route, const float origin[3], 
 		{
 			continue;
 		}
-		int offset = hint >= 0 ? RoundToZero(FloatAbs(float(i - hint))) : i;
+		int offset = GetIndexDistance(i, hint);
 		if (preferredOffset >= 0 && offset >= preferredOffset)
 		{
 			continue;
@@ -520,6 +520,15 @@ static int FindPreferredWithinTolerance(ArrayList route, const float origin[3], 
 		preferredOffset = offset;
 	}
 	return preferred;
+}
+
+static int GetIndexDistance(int index, int hint)
+{
+	if (hint < 0)
+	{
+		return index;
+	}
+	return index > hint ? index - hint : hint - index;
 }
 
 static void UpdateScoreboard(int client)

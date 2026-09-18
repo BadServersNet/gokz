@@ -45,11 +45,7 @@ void Store_RequestDownload(int client, const char[] key, int expectedSize)
 	}
 
 	DownloadJob job;
-	strcopy(job.objectKey, sizeof(DownloadJob::objectKey), key);
-	KeyToCachePath(key, job.cachePath, sizeof(DownloadJob::cachePath));
-	strcopy(job.map, sizeof(DownloadJob::map), gC_CurrentMap);
-	job.expectedSize = expectedSize;
-	job.waiters = new ArrayList();
+	InitDownloadJob(job, key, expectedSize);
 	job.waiters.Push(GetClientUserId(client));
 	g_DownloadQueue.PushArray(job);
 
@@ -67,13 +63,9 @@ void Store_RequestRouteDownload(const char[] key, int expectedSize, RouteDownloa
 	}
 
 	DownloadJob job;
-	strcopy(job.objectKey, sizeof(DownloadJob::objectKey), key);
-	KeyToCachePath(key, job.cachePath, sizeof(DownloadJob::cachePath));
-	strcopy(job.map, sizeof(DownloadJob::map), gC_CurrentMap);
-	job.expectedSize = expectedSize;
+	InitDownloadJob(job, key, expectedSize);
 	job.routeKind = kind;
 	job.routeUserid = routeUserid;
-	job.waiters = new ArrayList();
 	g_DownloadQueue.PushArray(job);
 	TryStartNextDownload();
 }
@@ -200,6 +192,15 @@ public void OnDownloadCompleted(S3Client client, S3Response response, any token)
 
 
 // =====[ PRIVATE ]=====
+
+static void InitDownloadJob(DownloadJob job, const char[] key, int expectedSize)
+{
+	strcopy(job.objectKey, sizeof(DownloadJob::objectKey), key);
+	KeyToCachePath(key, job.cachePath, sizeof(DownloadJob::cachePath));
+	strcopy(job.map, sizeof(DownloadJob::map), gC_CurrentMap);
+	job.expectedSize = expectedSize;
+	job.waiters = new ArrayList();
+}
 
 static void TryStartNextDownload()
 {

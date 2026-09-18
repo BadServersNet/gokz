@@ -5,6 +5,10 @@
 
 
 
+static int g_CopyBuffer[RP_COPY_CHUNK_CELLS];
+
+
+
 // =====[ PUBLIC ]=====
 
 bool ReadReplayFileInfo(const char[] path, int &replayType, int &steamID, char[] mapName, int mapNameLength)
@@ -44,49 +48,6 @@ bool ReadReplayFileInfo(const char[] path, int &replayType, int &steamID, char[]
 	SkipLengthPrefixedString(file);
 	file.ReadInt32(steamID);
 	delete file;
-	return true;
-}
-
-static int g_CopyBuffer[RP_COPY_CHUNK_CELLS];
-
-static bool CopyCells(File source, File destination, int cells)
-{
-	int remaining = cells;
-	while (remaining > 0)
-	{
-		int chunk = remaining < sizeof(g_CopyBuffer) ? remaining : sizeof(g_CopyBuffer);
-		int read = source.Read(g_CopyBuffer, chunk, 4);
-		if (read != chunk)
-		{
-			LogError("Replay copy read %d of %d cells (%d cells left).", read, chunk, remaining);
-			return false;
-		}
-		if (!destination.Write(g_CopyBuffer, read, 4))
-		{
-			LogError("Replay copy failed to write %d cells.", read);
-			return false;
-		}
-		remaining -= read;
-	}
-	return true;
-}
-
-static bool CopyTailBytes(File source, File destination, int bytes)
-{
-	for (int i = 0; i < bytes; i++)
-	{
-		int value;
-		if (!source.ReadInt8(value))
-		{
-			LogError("Replay copy failed to read tail byte %d of %d.", i + 1, bytes);
-			return false;
-		}
-		if (!destination.WriteInt8(value))
-		{
-			LogError("Replay copy failed to write tail byte %d of %d.", i + 1, bytes);
-			return false;
-		}
-	}
 	return true;
 }
 
@@ -133,9 +94,58 @@ bool CopyReplayFile(const char[] sourcePath, const char[] destinationPath)
 	return true;
 }
 
+void SkipLengthPrefixedString(File file)
+{
+	int length;
+	file.ReadInt8(length);
+	length &= 0xFF;
+	file.Seek(length, SEEK_CUR);
+}
+
 
 
 // =====[ PRIVATE ]=====
+
+static bool CopyCells(File source, File destination, int cells)
+{
+	int remaining = cells;
+	while (remaining > 0)
+	{
+		int chunk = remaining < sizeof(g_CopyBuffer) ? remaining : sizeof(g_CopyBuffer);
+		int read = source.Read(g_CopyBuffer, chunk, 4);
+		if (read != chunk)
+		{
+			LogError("Replay copy read %d of %d cells (%d cells left).", read, chunk, remaining);
+			return false;
+		}
+		if (!destination.Write(g_CopyBuffer, read, 4))
+		{
+			LogError("Replay copy failed to write %d cells.", read);
+			return false;
+		}
+		remaining -= read;
+	}
+	return true;
+}
+
+static bool CopyTailBytes(File source, File destination, int bytes)
+{
+	for (int i = 0; i < bytes; i++)
+	{
+		int value;
+		if (!source.ReadInt8(value))
+		{
+			LogError("Replay copy failed to read tail byte %d of %d.", i + 1, bytes);
+			return false;
+		}
+		if (!destination.WriteInt8(value))
+		{
+			LogError("Replay copy failed to write tail byte %d of %d.", i + 1, bytes);
+			return false;
+		}
+	}
+	return true;
+}
 
 static void ReadFormatVersion1Info(File file, int &replayType, int &steamID, char[] mapName, int mapNameLength)
 {
@@ -144,14 +154,6 @@ static void ReadFormatVersion1Info(File file, int &replayType, int &steamID, cha
 	ReadLengthPrefixedString(file, mapName, mapNameLength);
 	file.Seek(20, SEEK_CUR);
 	file.ReadInt32(steamID);
-}
-
-void SkipLengthPrefixedString(File file)
-{
-	int length;
-	file.ReadInt8(length);
-	length &= 0xFF;
-	file.Seek(length, SEEK_CUR);
 }
 
 static void ReadLengthPrefixedString(File file, char[] buffer, int maxlength)

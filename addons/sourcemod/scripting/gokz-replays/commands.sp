@@ -33,7 +33,7 @@ public Action CommandReplayStoreUrl(int client, int args)
 	{
 		if (gH_DB == null)
 		{
-			ReplyToCommand(client, "[KZ] Usage: sm_replaystore_url <key>");
+			ReplyToCommand(client, "[KZ] Usage: sm_replaystore_url <code or key>");
 			return Plugin_Handled;
 		}
 		DB_PrintRecentReplayKeys(client);
