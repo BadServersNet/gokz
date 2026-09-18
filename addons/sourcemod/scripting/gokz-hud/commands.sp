@@ -120,28 +120,25 @@ public Action CommandToggleShowWeapon(int client, int args)
 public Action CommandToggleProgress(int client, int args)
 {
 	int progressText = GOKZ_HUD_GetOption(client, HUDOption_ProgressText);
-	int infoPanel = GOKZ_HUD_GetOption(client, HUDOption_InfoPanel);
+	bool infoPanelEnabled = GOKZ_HUD_GetOption(client, HUDOption_InfoPanel) == InfoPanel_Enabled;
+	int nextProgressText = GetNextProgressText(progressText, infoPanelEnabled);
+	GOKZ_HUD_SetOption(client, HUDOption_ProgressText, nextProgressText);
+	return Plugin_Handled;
+}
 
+static int GetNextProgressText(int progressText, bool infoPanelEnabled)
+{
+	int visibleProgressText = infoPanelEnabled ? ProgressText_InfoPanel : ProgressText_TPMenu;
 	if (progressText == ProgressText_Disabled)
 	{
-		if (infoPanel == InfoPanel_Enabled)
-		{
-			GOKZ_HUD_SetOption(client, HUDOption_ProgressText, ProgressText_InfoPanel);
-		}
-		else
-		{
-			GOKZ_HUD_SetOption(client, HUDOption_ProgressText, ProgressText_TPMenu);
-		}
+		return visibleProgressText;
 	}
-	else if (infoPanel == InfoPanel_Disabled && progressText == ProgressText_InfoPanel)
+	bool hiddenInInfoPanel = progressText == ProgressText_InfoPanel && !infoPanelEnabled;
+	if (hiddenInInfoPanel)
 	{
-		GOKZ_HUD_SetOption(client, HUDOption_ProgressText, ProgressText_TPMenu);
+		return visibleProgressText;
 	}
-	else
-	{
-		GOKZ_HUD_SetOption(client, HUDOption_ProgressText, ProgressText_Disabled);
-	}
-	return Plugin_Handled;
+	return ProgressText_Disabled;
 }
 
 public Action CommandToggleProgressRank(int client, int args)
