@@ -63,29 +63,25 @@
 	{
 		"en"		"{darkred}This replay is not available on this server."
 	}
-	"Replay Download - Start"
-	{
-		// Downloading replay (1.2 MB)...
-		"#format"	"{1:s}"
-		"en"		"{grey}Downloading replay ({1})..."
-	}
-	"Replay Download - Joined"
-	{
-		"en"		"{grey}This replay is already being downloaded, it will start when it is ready."
-	}
 	"Replay Download - Progress"
 	{
-		// Downloading replay: 42%
-		"#format"	"{1:d}"
-		"en"		"Downloading replay: {1}%%"
+		"#format"	"{1:s},{2:s},{3:s},{4:d}"
+		"en"		"<font color='#ffffff'>Downloading replay ({1})</font>\n\n<font color='#71eeb8'>{2}</font><font color='#ffffff20'>{3}</font> <font color='#ffffff'>{4}%%</font>"
 	}
-	"Replay Download - Done"
+	"Replay Download - Completed"
 	{
-		"en"		"{lime}Replay downloaded."
+		"#format"	"{1:s},{2:s},{3:s},{4:d}"
+		"en"		"<font color='#71eeb8'>Replay download completed ({1})</font>\n\n<font color='#71eeb8'>{2}</font><font color='#ffffff20'>{3}</font> <font color='#ffffff'>{4}%%</font>"
 	}
-	"Replay Download - Failed"
+	"Replay Download - HUD Failed"
 	{
-		"en"		"{darkred}The replay could not be downloaded. Please try again later."
+		"#format"	"{1:s}"
+		"en"		"<font color='#ea4141'>Replay download failed ({1})</font>\n\n<font color='#ffffff'>Please try again later.</font>"
+	}
+	"Replay Download - HUD Unavailable"
+	{
+		"#format"	"{1:s}"
+		"en"		"<font color='#ea4141'>Replay unavailable ({1})</font>\n\n<font color='#ffffff'>This replay is not available on this server.</font>"
 	}
 
 

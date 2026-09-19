@@ -32,6 +32,7 @@ int gI_ObserverTarget[MAXPLAYERS + 1];
 bool gB_JBTakeoff[MAXPLAYERS + 1];
 bool gB_FastUpdateRate[MAXPLAYERS + 1];
 int gI_DynamicMenu[MAXPLAYERS + 1];
+char gC_InfoPanelOverride[MAXPLAYERS + 1][HUD_MAX_HINT_SIZE];
 
 #include "gokz-hud/spectate_text.sp"
 #include "gokz-hud/commands.sp"
@@ -113,10 +114,12 @@ public void OnLibraryRemoved(const char[] name)
 public void OnClientDisconnect(int client)
 {
 	gI_ObserverTarget[client] = -1;
+	gC_InfoPanelOverride[client][0] = '\0';
 }
 
 public void OnClientPutInServer(int client)
 {
+	gC_InfoPanelOverride[client][0] = '\0';
 	SDKHook(client, SDKHook_PostThinkPost, OnPlayerPostThinkPost);
 }
 
