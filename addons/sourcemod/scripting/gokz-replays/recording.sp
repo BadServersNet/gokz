@@ -467,6 +467,10 @@ static bool SaveRecordingOfJump(int client, int jumptype, float distance, int bl
 		LogError("WARNING: Invalid airtime (this is probably a bugged jump, please report it!).");
 		return false;
 	}
+	if (airtimeTicks + 2 * preAndPostRunTickCount > recordedRecentData[client].Length)
+	{
+		return false;
+	}
 	
 	// Create and fill general header
 	GeneralReplayHeader generalHeader;
@@ -624,8 +628,9 @@ static void WriteTickData(File file, int client, int replayType, int airtime = 0
 			for (int i = 0; i < replayLength; i++)
 			{
 				int rollingI = RecordingIndexAdd(client, i - replayLength);
+				int prevRollingI = RecordingIndexAdd(client, IntMax(0, i - 1) - replayLength);
 				recordedRecentData[client].GetArray(rollingI, tickData);
-				recordedRecentData[client].GetArray(IntMax(0, i-1), prevTickData);
+				recordedRecentData[client].GetArray(prevRollingI, prevTickData);
 				WriteTickDataToFile(file, isFirstTick, tickData, prevTickData);
 				isFirstTick = false;
 			}
