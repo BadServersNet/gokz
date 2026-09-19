@@ -58,6 +58,11 @@ void OnClientPutInServer_ReplayEntries(int client)
 
 public int MenuHandler_ReplayEntries(Menu menu, MenuAction action, int param1, int param2)
 {
+	if (action == MenuAction_End)
+	{
+		delete menu;
+		return 0;
+	}
 	if (action == MenuAction_Select)
 	{
 		char info[8];
