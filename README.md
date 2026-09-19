@@ -2,6 +2,8 @@
 
 GOKZ is a package of [SourceMod](https://www.sourcemod.net/about.php) plugins for CS:GO Kreedz (KZ) servers. The KZ game mode involves [speedrunning](https://en.wikipedia.org/wiki/Speedrun) through custom maps.
 
+This is the [BadServers.net](https://badservers.net) version of GOKZ, maintained at [BadServersNet/gokz](https://github.com/BadServersNet/gokz). It is based on [KZGlobalTeam/gokz](https://github.com/KZGlobalTeam/gokz) and starts at version 4.0.0.
+
 ## Features
 
  * **Timer** - Times runs by automatically detecting the use of start and end buttons in KZ maps.
@@ -27,7 +29,7 @@ For more information about what each plugin does, please see [PLUGINS.md](PLUGIN
  * [SourceMod ^1.11](https://www.sourcemod.net/downloads.php?branch=stable)
  * [DHooks Extension ^2.2.0](https://forums.alliedmods.net/showpost.php?p=2588686&postcount=589)
  * [MovementAPI Plugin ^2.4.2](https://github.com/danzayau/MovementAPI)
- * [S3 Extension](https://github.com/BadServersNet/sm-s3) (required for gokz-replays plugin)
+ * [S3 Extension ^0.2.0](https://github.com/BadServersNet/sm-s3/releases) (required for gokz-replays plugin)
  * Optional - [GlobalAPI Plugin](https://bitbucket.org/kztimerglobalteam/globalapi-smplugin) (required for gokz-globals plugin)
  * Optional - A "console cleaner" extension to prevent `Datatable warning` server console spam
 
