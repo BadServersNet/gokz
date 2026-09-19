@@ -402,6 +402,8 @@ native void GOKZ_HUD_GetMenuSpectatorText(int client, any[] info, char[] buffer,
  */
 native void GOKZ_HUD_ForceUpdateTPMenu(int client);
 
+native void GOKZ_HUD_SetInfoPanelOverride(int client, const char[] text);
+
 // =====[ STOCKS ]=====
 
 /**
@@ -498,5 +500,6 @@ public void __pl_gokz_hud_SetNTVOptional()
 	MarkNativeAsOptional("GOKZ_HUD_SetMenuShowing");
 	MarkNativeAsOptional("GOKZ_HUD_GetMenuSpectatorText");
 	MarkNativeAsOptional("GOKZ_HUD_ForceUpdateTPMenu");
+	MarkNativeAsOptional("GOKZ_HUD_SetInfoPanelOverride");
 }
 #endif

@@ -148,7 +148,6 @@ void Progress_OnRouteDownloadFailed(RouteDownloadKind kind, int routeUserid)
 	{
 		return;
 	}
-	GOKZ_PrintToChat(client, true, "%t", "Replay Download - Failed");
 	GOKZ_PlayErrorSound(client);
 }
 

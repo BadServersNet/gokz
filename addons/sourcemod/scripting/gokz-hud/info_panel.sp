@@ -42,6 +42,12 @@ void OnPlayerRunCmdPost_InfoPanel(int client, int cmdnum, HUDInfo info)
 
 static void UpdateInfoPanel(int client, HUDInfo info)
 {
+	if (gC_InfoPanelOverride[client][0] != '\0')
+	{
+		PrintCSGOHUDText(client, gC_InfoPanelOverride[client]);
+		return;
+	}
+
 	KZPlayer player = KZPlayer(client);
 	
 	if (player.Fake || !IsDrawingInfoPanel(player.ID))
@@ -54,6 +60,12 @@ static void UpdateInfoPanel(int client, HUDInfo info)
 	{
 		PrintCSGOHUDText(player.ID, infoPanelText);
 	}
+}
+
+void SetInfoPanelOverride(int client, const char[] text)
+{
+	strcopy(gC_InfoPanelOverride[client], HUD_MAX_HINT_SIZE, text);
+	PrintCSGOHUDText(client, text);
 }
 
 static bool NothingEnabledInInfoPanel(KZPlayer player)

@@ -137,6 +137,8 @@ public void OnLibraryRemoved(const char[] name)
 
 public void OnPluginEnd()
 {
+	OnPluginEnd_StoreDownload();
+
 	if (gH_S3 != null)
 	{
 		delete gH_S3;
