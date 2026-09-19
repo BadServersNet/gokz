@@ -145,7 +145,12 @@ public void GOKZ_DB_OnClientSetup(int client, int steamID, bool cheater)
 	}
 }
 
-public void GOKZ_DB_OnTimeInserted(int client, int steamID, int mapID, int course, int mode, int style, int runTimeMS, int teleportsUsed)
+public void GOKZ_RP_OnPlaybackFailed(int client)
+{
+	OnReplayPlaybackFailed_JumpTop(client);
+}
+
+public void GOKZ_DB_OnTimeInserted(int client, int steamID, int mapID, int course, int mode, int style, int runTimeMS, int teleportsUsed, int timeID)
 {
 	if (GOKZ_DB_IsCheater(client))
 	{

@@ -59,48 +59,59 @@ static float botLandingSpeed[RP_MAX_BOTS];
 
 // =====[ PUBLIC ]=====
 
-// Returns the client index of the replay bot, or -1 otherwise
-int LoadReplayBot(int client, char[] path)
+bool CanClientLoadReplay(int client)
 {
-	// Safeguard Check
-	if (GOKZ_GetCoreOption(client, Option_Safeguard) > Safeguard_Disabled && GOKZ_GetTimerRunning(client) && GOKZ_GetValidTimer(client))
+	if (IsSafeguardBlocking(client))
 	{
-		if (!GOKZ_GetPaused(client) && !GOKZ_GetCanPause(client))
-		{
-			GOKZ_PrintToChat(client, true, "%t", "Safeguard - Blocked");
-			GOKZ_PlayErrorSound(client);
-			return -1;
-		}
+		GOKZ_PrintToChat(client, true, "%t", "Safeguard - Blocked");
+		GOKZ_PlayErrorSound(client);
+		return false;
 	}
-	int bot;
-	if (GetBotsInUse() < RP_MAX_BOTS)
-	{
-		bot = GetUnusedBot();
-	}
-	else
+	if (GetBotsInUse() >= RP_MAX_BOTS)
 	{
 		GOKZ_PrintToChat(client, true, "%t", "No Bots Available");
 		GOKZ_PlayErrorSound(client);
-		return -1;
+		return false;
 	}
-	
+	return true;
+}
+
+bool StartReplayBot(int client, const char[] path)
+{
+	if (!CanClientLoadReplay(client))
+	{
+		return false;
+	}
+
+	int bot = GetUnusedBot();
 	if (bot == -1)
 	{
-		LogError("Unused bot could not be found even though only %d out of %d are known to be in use.", 
+		LogError("Unused bot could not be found even though only %d out of %d are known to be in use.",
 				 GetBotsInUse(), RP_MAX_BOTS);
 		GOKZ_PlayErrorSound(client);
-		return -1;
+		return false;
 	}
 
 	if (!LoadPlayback(client, bot, path))
 	{
 		GOKZ_PlayErrorSound(client);
-		return -1;
+		return false;
 	}
-	
+
 	ServerCommand("bot_add");
 	botCaller[bot] = client;
-	return botClient[bot];
+	return true;
+}
+
+static bool IsSafeguardBlocking(int client)
+{
+	bool safeguardEnabled = GOKZ_GetCoreOption(client, Option_Safeguard) > Safeguard_Disabled;
+	bool timerActive = GOKZ_GetTimerRunning(client) && GOKZ_GetValidTimer(client);
+	if (!safeguardEnabled || !timerActive)
+	{
+		return false;
+	}
+	return !GOKZ_GetPaused(client) && !GOKZ_GetCanPause(client);
 }
 
 // Passes the current state of the replay into the HUDInfo struct
@@ -359,7 +370,7 @@ void GOKZ_OnOptionsLoaded_Playback(int client)
 // =====[ PRIVATE ]=====
 
 // Returns false if there was a problem loading the playback e.g. doesn't exist
-static bool LoadPlayback(int client, int bot, char[] path)
+static bool LoadPlayback(int client, int bot, const char[] path)
 {
 	if (!FileExists(path))
 	{

@@ -30,6 +30,8 @@ enum HUDOption:
 	HUDOption_SpecListPosition,
 	HUDOption_UpdateRate,
 	HUDOption_DynamicMenu,
+	HUDOption_ProgressText,
+	HUDOption_ProgressRank,
 	HUDOPTION_COUNT
 };
 
@@ -139,6 +141,21 @@ enum
 	DYNAMICMENU_COUNT
 };
 
+enum
+{
+	ProgressText_Disabled = 0,
+	ProgressText_InfoPanel,
+	ProgressText_TPMenu,
+	PROGRESSTEXT_COUNT
+};
+
+enum
+{
+	ProgressRank_Disabled = 0,
+	ProgressRank_Enabled,
+	PROGRESSRANK_COUNT
+};
+
 // =====[ STRUCTS ]======
 
 enum struct HUDInfo
@@ -186,7 +203,9 @@ stock char gC_HUDOptionNames[HUDOPTION_COUNT][] =
 	"GOKZ HUD - Show Spectators",
 	"GOKZ HUD - Spec List Pos",
 	"GOKZ HUD - Update Rate",
-	"GOKZ HUD - Dynamic Menu"
+	"GOKZ HUD - Dynamic Menu",
+	"GOKZ HUD - Progress Text",
+	"GOKZ HUD - Progress Rank"
 };
 
 stock char gC_HUDOptionDescriptions[HUDOPTION_COUNT][] = 
@@ -204,7 +223,9 @@ stock char gC_HUDOptionDescriptions[HUDOPTION_COUNT][] =
 	"Show Spectators - 0 = Disabled, 1 = Number Only, 2 = Number and Names",
 	"Spectator List Position - 0 = Teleport Menu, 2 = Center Panel",
 	"HUD Update Rate - 0 = Slow, 1 = Fast",
-	"Dynamic Menu - 0 = Legacy, 1 = Disabled, 2 = Enabled"
+	"Dynamic Menu - 0 = Legacy, 1 = Disabled, 2 = Enabled",
+	"Map Progress Display - 0 = Disabled, 1 = Centre Panel, 2 = Teleport Menu",
+	"Map Progress Rank - 0 = Disabled, 1 = Enabled"
 };
 
 stock char gC_HUDOptionPhrases[HUDOPTION_COUNT][] = 
@@ -222,7 +243,9 @@ stock char gC_HUDOptionPhrases[HUDOPTION_COUNT][] =
 	"Options Menu - Show Spectators",
 	"Options Menu - Spectator List Position",
 	"Options Menu - Update Rate",
-	"Options Menu - Dynamic Menu"
+	"Options Menu - Dynamic Menu",
+	"Options Menu - Progress Text",
+	"Options Menu - Progress Rank"
 };
 
 stock int gI_HUDOptionCounts[HUDOPTION_COUNT] = 
@@ -240,7 +263,9 @@ stock int gI_HUDOptionCounts[HUDOPTION_COUNT] =
 	SHOWSPECS_COUNT,
 	SPECLISTPOSITION_COUNT,
 	UPDATERATE_COUNT,
-	DYNAMICMENU_COUNT
+	DYNAMICMENU_COUNT,
+	PROGRESSTEXT_COUNT,
+	PROGRESSRANK_COUNT
 };
 
 stock int gI_HUDOptionDefaults[HUDOPTION_COUNT] = 
@@ -258,7 +283,9 @@ stock int gI_HUDOptionDefaults[HUDOPTION_COUNT] =
 	ShowSpecs_Disabled,
 	SpecListPosition_TPMenu,
 	UpdateRate_Slow,
-	DynamicMenu_Legacy
+	DynamicMenu_Legacy,
+	ProgressText_InfoPanel,
+	ProgressRank_Enabled
 };
 
 stock char gC_TPMenuPhrases[TPMENU_COUNT][] = 
@@ -333,6 +360,13 @@ stock char gC_DynamicMenuPhrases[DYNAMICMENU_COUNT][]=
 	"Options Menu - Legacy",
 	"Options Menu - Disabled",
 	"Options Menu - Enabled"
+};
+
+stock char gC_ProgressTextPhrases[PROGRESSTEXT_COUNT][] =
+{
+	"Options Menu - Disabled",
+	"Options Menu - Info Panel",
+	"Options Menu - Teleport Menu"
 };
 
 // =====[ NATIVES ]=====

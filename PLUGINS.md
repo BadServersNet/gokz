@@ -78,7 +78,7 @@ Allows players to initiate 1v1 duels and multiplayer races.
 
 ### gokz-replays
 
-Records and allows playback the player's movement of the server's record times. **Requires gokz-localranks.**
+Records a replay of every run, jumpstat PB and anti-cheat detection, uploads them to an S3-compatible replay store shared between servers, and plays them back with bots. Also tracks each running player's map progress along the server record route (shown by gokz-hud and on the scoreboard). **Requires gokz-localdb, gokz-localranks and the S3 extension.**
 
 ### gokz-saveloc
 

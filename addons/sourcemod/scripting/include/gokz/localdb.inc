@@ -206,16 +206,18 @@ forward void GOKZ_DB_OnMapSetup(int mapID);
  * @param style				Player's movement style.
  * @param runTimeMS			Player's end time in milliseconds.
  * @param teleportsUsed		Number of teleports used by player.
+ * @param timeID			TimeID of the inserted row, or -1 if no row was inserted.
  */
 forward void GOKZ_DB_OnTimeInserted(
-	int client, 
-	int steamID, 
-	int mapID, 
-	int course, 
-	int mode, 
-	int style, 
-	int runTimeMS, 
-	int teleportsUsed);
+	int client,
+	int steamID,
+	int mapID,
+	int course,
+	int mode,
+	int style,
+	int runTimeMS,
+	int teleportsUsed,
+	int timeID);
 
 /**
  * Called when jumpstat PB has been achieved.
@@ -230,6 +232,7 @@ forward void GOKZ_DB_OnTimeInserted(
  * @param pre			Speed at takeoff.
  * @param max			Maximum speed during the jump.
  * @param airtime		Amount of time spend airborne.
+ * @param jumpID		JumpID of the Jumpstats row holding this PB, or -1 if unknown.
  */
 forward void GOKZ_DB_OnJumpstatPB(
 	int client,
@@ -241,7 +244,8 @@ forward void GOKZ_DB_OnJumpstatPB(
 	float sync,
 	float pre,
 	float max,
-	int airtime);
+	int airtime,
+	int jumpID);
 
 
 // =====[ NATIVES ]=====

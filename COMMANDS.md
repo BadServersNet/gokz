@@ -39,6 +39,8 @@
  * `!timertype` - Toggle the PRO/NUB indicator for the timer text.
  * `!speed` - Toggle visibility of your speed and jump pre-speed.
  * `!hideweapon` - Toggle visibility of your weapon.
+ * `!progress` - Toggle visibility of your map progress along the server record route (centre panel or teleport menu).
+ * `!progressrank` - Toggle your rank among running players next to your map progress.
 
 ### gokz-tips
 
@@ -91,7 +93,14 @@
 
 ### gokz-replays
 
- * `!replay` - Open the replay loading menu.
+ * `!replay`/`!replays` - Open the replay menu for the current map. Use `!replay all` to browse every map, `!replay <map>` to browse a specific map, or `!replay <code>` to play a replay directly. Usage: `!replay [all|map|code]`
+ * `!runreplays` - Browse run replays. Shows the server record and the top times of the selected map, mode and course. Usage: `!runreplays [all|map]`
+ * `!myreplays` - Browse your own run replays. Usage: `!myreplays [all|map]`
+ * `!jumpreplays`/`!jsreplays` - Browse the best jumpstat replays of every player. Usage: `!jumpreplays [all|map]`
+ * `!recentreplays`/`!rrp` - Browse the most recent replays of every kind in one list. Usage: `!recentreplays [all|map]`
+ * `!progressreplay` - Measure your map progress against a specific run replay instead of the server record. Without a code it switches back to the server record. Usage: `!progressreplay [code]`
+ * `!progressmenu` - Toggle a live leaderboard of every running player's map progress.
+ * `!timediff` - Toggle periodic chat messages telling you how far ahead of or behind your own PB replay you are. `!timediff 10` sets a fixed interval in seconds, `!timediff auto` uses a twentieth of your PB, `!timediff off` disables it. Also in Options, General.
  * `!replaycontrols`/`!rpcontrols` - Toggle the replay control menu (when in control of a replay bot).
  * `!replaygoto`/`!rpgoto` - Skip to a specific time in the replay. Usage: `!rpgoto hh:mm:ss`
 
@@ -168,3 +177,10 @@ Many of these commands return results for your currently selected mode.
 ### gokz-localranks
 
  * `!updatemappool` - Update the ranked map pool with the list of maps in cfg/sourcemod/gokz/gokz-localranks-mappool.cfg.
+
+### gokz-replays
+
+ * `!replaystore_status` - Show the replay store upload and download queues and the last upload error.
+ * `!replaystore_check` - Test the replay store credentials and bucket.
+ * `!replaystore_flush` - Rescan the replay outbox and retry pending uploads.
+ * `!replaystore_url` - Print the public download URL for a stored replay to the console (requires `gokz_replay_store_public_url`). Without an argument it lists the most recent replays with their codes and keys. Usage: `!replaystore_url [code or key]`

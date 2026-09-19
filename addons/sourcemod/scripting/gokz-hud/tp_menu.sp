@@ -127,7 +127,7 @@ static void UpdateTPMenu(int client, HUDInfo info)
 		{
 			if (GetClientMenu(client) == MenuSource_None
 				|| gB_MenuShowing[player.ID] && GetClientAvgLoss(player.ID, NetFlow_Both) > EPSILON
-				|| gB_MenuShowing[player.ID] && player.TimerRunning && !player.Paused && player.TimerText == TimerText_TPMenu
+				|| gB_MenuShowing[player.ID] && HasLiveTitle(player)
 				|| gB_MenuShowing[player.ID] && force)
 			{
 				ShowTPMenu(player, info);
@@ -137,7 +137,7 @@ static void UpdateTPMenu(int client, HUDInfo info)
 		{
 			// There is no need to update this very often as there's no menu selection to be done here.
 			if (GetClientMenu(client) == MenuSource_None
-				|| gB_MenuShowing[player.ID] && player.TimerRunning && !player.Paused && player.TimerText == TimerText_TPMenu)
+				|| gB_MenuShowing[player.ID] && HasLiveTitle(player))
 			{
 				ShowPanel(player, info);
 			}
@@ -186,6 +186,7 @@ static void ShowPanel(KZPlayer player, HUDInfo info)
 			Format(panelTitle, sizeof(panelTitle), "%s\n%t", panelTitle, "TP Menu - Spectator Teleports", info.CurrentTeleport);
 		}
 	}
+	AppendProgressText(player, info, panelTitle, sizeof(panelTitle));
 
 	if (panelTitle[0] != '\0' && GetClientMenu(player.ID) == MenuSource_None || gB_MenuShowing[player.ID])
 	{
@@ -228,10 +229,44 @@ static void TPMenuSetTitle(KZPlayer player, Menu menu, HUDInfo info)
 			Format(title, sizeof(title), "%s", FormatTimerTextForMenu(player, info));
 		}
 	}
+	AppendProgressText(player, info, title, sizeof(title));
 	if (title[0] != '\0')
 	{
-		menu.SetTitle(title);
+		menu.SetTitle("%s", title);
 	}
+}
+
+static bool HasLiveTitle(KZPlayer player)
+{
+	if (!player.TimerRunning || player.Paused)
+	{
+		return false;
+	}
+	if (player.TimerText == TimerText_TPMenu)
+	{
+		return true;
+	}
+	return player.GetHUDOption(HUDOption_ProgressText) == ProgressText_TPMenu && IsProgressAvailable(player);
+}
+
+static void AppendProgressText(KZPlayer player, HUDInfo info, char[] title, int maxlength)
+{
+	if (player.GetHUDOption(HUDOption_ProgressText) != ProgressText_TPMenu)
+	{
+		return;
+	}
+	char progressText[64];
+	strcopy(progressText, sizeof(progressText), FormatProgressTextForMenu(player, info));
+	if (progressText[0] == '\0')
+	{
+		return;
+	}
+	if (title[0] != '\0')
+	{
+		Format(title, maxlength, "%s \n%s", title, progressText);
+		return;
+	}
+	strcopy(title, maxlength, progressText);
 }
 
 static void TPMenuAddItems(KZPlayer player, Menu menu)

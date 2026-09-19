@@ -83,11 +83,16 @@ UPDATE OR IGNORE Maps \
     SET LastPlayed=CURRENT_TIMESTAMP \
     WHERE Name='%s'";
 
-char mysql_maps_upsert[] = "\
+char mysql_maps_update[] = "\
+UPDATE Maps \
+    SET LastPlayed=CURRENT_TIMESTAMP \
+    WHERE Name='%s'";
+
+char mysql_maps_insert[] = "\
 INSERT INTO Maps (Name, LastPlayed) \
-    VALUES ('%s', CURRENT_TIMESTAMP) \
-    ON DUPLICATE KEY UPDATE \
-    LastPlayed=CURRENT_TIMESTAMP";
+    SELECT '%s', CURRENT_TIMESTAMP \
+    FROM DUAL \
+    WHERE NOT EXISTS (SELECT 1 FROM Maps WHERE Name='%s')";
 
 char sql_maps_findid[] = "\
 SELECT MapID, Name \
@@ -404,3 +409,13 @@ SELECT SteamID32, MapID, X, Y, Z, Angle0, Angle1 \
 	WHERE \
 		SteamID32 = %d AND \
 		MapID = %d";
+
+
+
+// =====[ LAST INSERT ID ]=====
+
+char sqlite_last_insert_id[] = "\
+SELECT last_insert_rowid()";
+
+char mysql_last_insert_id[] = "\
+SELECT LAST_INSERT_ID()";

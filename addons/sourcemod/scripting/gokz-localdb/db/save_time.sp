@@ -31,8 +31,19 @@ void DB_SaveTime(int client, int course, int mode, int style, float runTime, int
 	// Save runTime to DB
 	FormatEx(query, sizeof(query), sql_times_insert, steamID, mode, style, runTimeMS, teleportsUsed, mapID, course);
 	txn.AddQuery(query);
-	
+	DB_AddLastInsertIdQuery(txn);
+
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_SaveTime, DB_TxnFailure_Generic_DataPack, data, DBPrio_Normal);
+}
+
+static int ReadInsertedTimeID(Handle[] results)
+{
+	int insertedRows = SQL_GetAffectedRows(results[0]);
+	if (insertedRows == 0)
+	{
+		return -1;
+	}
+	return DB_ReadLastInsertId(results[1]);
 }
 
 public void DB_TxnSuccess_SaveTime(Handle db, DataPack data, int numQueries, Handle[] results, any[] queryData)
@@ -52,9 +63,10 @@ public void DB_TxnSuccess_SaveTime(Handle db, DataPack data, int numQueries, Han
 	{
 		return;
 	}
-	
-	Call_OnTimeInserted(client, steamID, mapID, course, mode, style, runTimeMS, teleportsUsed);
-} 
+
+	int timeID = ReadInsertedTimeID(results);
+	Call_OnTimeInserted(client, steamID, mapID, course, mode, style, runTimeMS, teleportsUsed, timeID);
+}
 
 public void DB_DeleteTime(int client, int timeID)
 {
