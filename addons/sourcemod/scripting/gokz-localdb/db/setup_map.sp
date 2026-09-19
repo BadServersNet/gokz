@@ -33,8 +33,9 @@ void DB_SetupMap()
 		}
 		case DatabaseType_MySQL:
 		{
-			// INSERT ... ON DUPLICATE KEY ...
-			FormatEx(query, sizeof(query), mysql_maps_upsert, escapedMap);
+			FormatEx(query, sizeof(query), mysql_maps_update, escapedMap);
+			txn.AddQuery(query);
+			FormatEx(query, sizeof(query), mysql_maps_insert, escapedMap, escapedMap);
 			txn.AddQuery(query);
 		}
 	}
@@ -47,25 +48,12 @@ void DB_SetupMap()
 
 public void DB_TxnSuccess_SetupMap(Handle db, any data, int numQueries, Handle[] results, any[] queryData)
 {
-	switch (g_DBType)
+	if (!SQL_FetchRow(results[2]))
 	{
-		case DatabaseType_SQLite:
-		{
-			if (SQL_FetchRow(results[2]))
-			{
-				gI_DBCurrentMapID = SQL_FetchInt(results[2], 0);
-				gB_MapSetUp = true;
-				Call_OnMapSetup();
-			}
-		}
-		case DatabaseType_MySQL:
-		{
-			if (SQL_FetchRow(results[1]))
-			{
-				gI_DBCurrentMapID = SQL_FetchInt(results[1], 0);
-				gB_MapSetUp = true;
-				Call_OnMapSetup();
-			}
-		}
+		return;
 	}
+
+	gI_DBCurrentMapID = SQL_FetchInt(results[2], 0);
+	gB_MapSetUp = true;
+	Call_OnMapSetup();
 } 
