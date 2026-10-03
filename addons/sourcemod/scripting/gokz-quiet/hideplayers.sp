@@ -50,11 +50,22 @@ static Action OnSetTransmitClient(int entity, int client)
 {
 	if (GOKZ_GetOption(client, gC_QTOptionNames[QTOption_ShowPlayers]) == ShowPlayers_Disabled
 		 && entity != client
-		 && entity != GetObserverTarget(client))
+		 && entity != GetObserverTarget(client)
+		 && !IsOwnReplayBot(entity, client))
 	{
 		return Plugin_Handled;
 	}
 	return Plugin_Continue;
+}
+
+static bool IsOwnReplayBot(int entity, int client)
+{
+	if (!gB_GOKZReplays || !IsFakeClient(entity))
+	{
+		return false;
+	}
+	int owner = GOKZ_RP_GetBotOwner(entity);
+	return owner != 0 && (owner == client || owner == GetObserverTarget(client));
 }
 
 // Hide reload sounds. Required if other players were visible at one point during the gameplay.

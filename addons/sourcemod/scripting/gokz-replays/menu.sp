@@ -26,6 +26,8 @@ enum ReplayMenu
 #define ITEM_INFO_HUB_JUMPS "jumps"
 #define ITEM_INFO_HUB_RECENT "recent"
 #define ITEM_INFO_HUB_SCOPE "scope"
+#define ITEM_INFO_HUB_LEAD "lead"
+#define ITEM_INFO_HUB_RACE "race"
 
 static bool scopeAll[MAXPLAYERS + 1];
 static char scopeMap[MAXPLAYERS + 1][64];
@@ -500,11 +502,31 @@ static void SelectHubItem(int client, const char[] info)
 	{
 		OpenReplayMenu(client, ReplayMenu_RecentList);
 	}
+	else if (StrEqual(info, ITEM_INFO_HUB_LEAD))
+	{
+		SelectHubSession(client, ReplaySession_Lead);
+	}
+	else if (StrEqual(info, ITEM_INFO_HUB_RACE))
+	{
+		SelectHubSession(client, ReplaySession_Race);
+	}
 	else if (StrEqual(info, ITEM_INFO_HUB_SCOPE))
 	{
 		ReplayScope_Toggle(client);
 		OpenReplayMenu(client, ReplayMenu_Hub);
 	}
+}
+
+static void SelectHubSession(int client, int type)
+{
+	bool stopping = Session_GetType(client) == type;
+	Session_Toggle(client, type);
+	if (stopping)
+	{
+		OpenReplayMenu(client, ReplayMenu_Hub);
+		return;
+	}
+	ReplayMenu_SetCurrent(client, ReplayMenu_None);
 }
 
 static void NotifyNoRunMaps(int client)
@@ -537,9 +559,24 @@ static void DisplayReplayHubMenu(int client)
 	menu.AddItem(ITEM_INFO_HUB_JUMPS, display);
 	FormatEx(display, sizeof(display), "%T", "Replay Menu - Recent Replays", client);
 	menu.AddItem(ITEM_INFO_HUB_RECENT, display);
+	FormatHubSession(client, ReplaySession_Lead, display, sizeof(display));
+	menu.AddItem(ITEM_INFO_HUB_LEAD, display);
+	FormatHubSession(client, ReplaySession_Race, display, sizeof(display));
+	menu.AddItem(ITEM_INFO_HUB_RACE, display);
 	FormatScopeToggle(client, display, sizeof(display));
 	menu.AddItem(ITEM_INFO_HUB_SCOPE, display);
 	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+static void FormatHubSession(int client, int type, char[] buffer, int maxlength)
+{
+	bool active = Session_GetType(client) == type;
+	if (type == ReplaySession_Lead)
+	{
+		FormatEx(buffer, maxlength, "%T", active ? "Replay Menu - Stop Lead" : "Replay Menu - Lead Top Run", client);
+		return;
+	}
+	FormatEx(buffer, maxlength, "%T", active ? "Replay Menu - Stop Race" : "Replay Menu - Race Top Run", client);
 }
 
 static void FormatScopeToggle(int client, char[] buffer, int maxlength)

@@ -58,6 +58,7 @@ void CreateConVars()
 	gCV_gokz_replay_cache_purge_on_boot = AutoExecConfig_CreateConVar("gokz_replay_cache_purge_on_boot", "1", "Delete every cached replay that has already been uploaded to the replay store when the server boots. Replays still waiting for upload are kept.", _, true, 0.0, true, 1.0);
 
 	Progress_CreateConVars();
+	Playback_CreateConVars();
 
 	gCV_gokz_replay_store_enabled.AddChangeHook(OnConVarChanged_Store);
 	gCV_gokz_replay_store_endpoint.AddChangeHook(OnConVarChanged_Store);

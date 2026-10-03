@@ -43,6 +43,7 @@ char gC_InfoPanelOverride[MAXPLAYERS + 1][HUD_MAX_HINT_SIZE];
 #include "gokz-hud/options_menu.sp"
 #include "gokz-hud/progress_text.sp"
 #include "gokz-hud/racing_text.sp"
+#include "gokz-hud/session_text.sp"
 #include "gokz-hud/speed_text.sp"
 #include "gokz-hud/timer_text.sp"
 #include "gokz-hud/tp_menu.sp"

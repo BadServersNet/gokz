@@ -238,6 +238,10 @@ static void TPMenuSetTitle(KZPlayer player, Menu menu, HUDInfo info)
 
 static bool HasLiveTitle(KZPlayer player)
 {
+	if (IsSessionTextShownIn(player, ProgressText_TPMenu))
+	{
+		return true;
+	}
 	if (!player.TimerRunning || player.Paused)
 	{
 		return false;
@@ -251,12 +255,15 @@ static bool HasLiveTitle(KZPlayer player)
 
 static void AppendProgressText(KZPlayer player, HUDInfo info, char[] title, int maxlength)
 {
-	if (player.GetHUDOption(HUDOption_ProgressText) != ProgressText_TPMenu)
+	char progressText[128];
+	if (IsSessionTextShownIn(player, ProgressText_TPMenu))
 	{
-		return;
+		strcopy(progressText, sizeof(progressText), FormatSessionTextForMenu(player));
 	}
-	char progressText[64];
-	strcopy(progressText, sizeof(progressText), FormatProgressTextForMenu(player, info));
+	else if (player.GetHUDOption(HUDOption_ProgressText) == ProgressText_TPMenu)
+	{
+		strcopy(progressText, sizeof(progressText), FormatProgressTextForMenu(player, info));
+	}
 	if (progressText[0] == '\0')
 	{
 		return;

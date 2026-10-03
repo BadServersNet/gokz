@@ -7,6 +7,9 @@
 #include <gokz/core>
 #include <gokz/quiet>
 
+#undef REQUIRE_PLUGIN
+#include <gokz/replays>
+
 #pragma newdecls required
 #pragma semicolon 1
 
@@ -20,6 +23,8 @@ public Plugin myinfo =
 	version = GOKZ_VERSION,
 	url = GOKZ_SOURCE_URL
 };
+
+bool gB_GOKZReplays;
 
 
 #include "gokz-quiet/ambient.sp"
@@ -51,6 +56,8 @@ public void OnPluginStart()
 
 public void OnAllPluginsLoaded()
 {
+	gB_GOKZReplays = LibraryExists("gokz-replays");
+
 	TopMenu topMenu;
 	if (LibraryExists("gokz-core") && ((topMenu = GOKZ_GetOptionsTopMenu()) != null))
 	{
@@ -64,6 +71,18 @@ public void OnAllPluginsLoaded()
 			GOKZ_OnJoinTeam(client, GetClientTeam(client));
 		}
 	}
+}
+
+
+
+public void OnLibraryAdded(const char[] name)
+{
+	gB_GOKZReplays = gB_GOKZReplays || StrEqual(name, "gokz-replays");
+}
+
+public void OnLibraryRemoved(const char[] name)
+{
+	gB_GOKZReplays = gB_GOKZReplays && !StrEqual(name, "gokz-replays");
 }
 
 

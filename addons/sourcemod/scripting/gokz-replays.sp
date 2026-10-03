@@ -19,6 +19,7 @@
 #undef REQUIRE_PLUGIN
 #include <gokz/hud>
 #include <gokz/jumpstats>
+#include <gokz/racing>
 
 #pragma newdecls required
 #pragma semicolon 1
@@ -37,6 +38,7 @@ public Plugin myinfo =
 };
 
 bool gB_GOKZHUD;
+bool gB_GOKZRacing;
 char gC_CurrentMap[64];
 int gI_CurrentMapFileSize;
 bool gB_HideNameChange;
@@ -72,6 +74,9 @@ DynamicDetour gH_DHooks_TeamFull;
 #include "gokz-replays/store_download.sp"
 #include "gokz-replays/api.sp"
 #include "gokz-replays/controls.sp"
+#include "gokz-replays/session.sp"
+#include "gokz-replays/session_lead.sp"
+#include "gokz-replays/session_race.sp"
 
 
 
@@ -102,6 +107,7 @@ public void OnPluginStart()
 public void OnAllPluginsLoaded()
 {
 	gB_GOKZHUD = LibraryExists("gokz-hud");
+	gB_GOKZRacing = LibraryExists("gokz-racing");
 
 	TopMenu topMenu;
 	if (LibraryExists("gokz-core") && ((topMenu = GOKZ_GetOptionsTopMenu()) != null))
@@ -128,11 +134,13 @@ public void OnAllPluginsLoaded()
 public void OnLibraryAdded(const char[] name)
 {
 	gB_GOKZHUD = gB_GOKZHUD || StrEqual(name, "gokz-hud");
+	gB_GOKZRacing = gB_GOKZRacing || StrEqual(name, "gokz-racing");
 }
 
 public void OnLibraryRemoved(const char[] name)
 {
 	gB_GOKZHUD = gB_GOKZHUD && !StrEqual(name, "gokz-hud");
+	gB_GOKZRacing = gB_GOKZRacing && !StrEqual(name, "gokz-racing");
 }
 
 public void OnPluginEnd()
@@ -166,6 +174,7 @@ public void OnMapStart()
 	OnMapStart_StoreUpload();
 	OnMapStart_Progress();
 	OnMapStart_TimeDiff();
+	OnMapStart_Session();
 }
 
 public void OnMapEnd()
@@ -254,6 +263,7 @@ public void OnClientPutInServer(int client)
 	OnClientPutInServer_Progress(client);
 	OnClientPutInServer_ProgressMenu(client);
 	OnClientPutInServer_TimeDiff(client);
+	OnClientPutInServer_Session(client);
 }
 
 public void OnClientDisconnect(int client)
@@ -265,6 +275,7 @@ public void OnClientDisconnect(int client)
 	OnClientDisconnect_Progress(client);
 	OnClientDisconnect_ProgressMenu(client);
 	OnClientDisconnect_TimeDiff(client);
+	OnClientDisconnect_Session(client);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -282,10 +293,17 @@ public void OnPlayerRunCmdPost(int client, int buttons, int impulse, const float
 	OnPlayerRunCmdPost_Playback(client);
 	OnPlayerRunCmdPost_Recording(client, buttons, tickcount, vel, mouse);
 	OnPlayerRunCmdPost_ReplayControls(client, cmdnum);
+	OnPlayerRunCmdPost_Session(client);
 }
 
 public Action GOKZ_OnTimerStart(int client, int course)
 {
+	Action sessionAction = GOKZ_OnTimerStart_Session(client);
+	if (sessionAction != Plugin_Continue)
+	{
+		return sessionAction;
+	}
+
 	Action action = GOKZ_OnTimerStart_Recording(client);
 	if (action != Plugin_Continue)
 	{
@@ -300,28 +318,33 @@ public void GOKZ_OnTimerStart_Post(int client, int course)
 	GOKZ_OnTimerStart_Post_Recording(client);
 	GOKZ_OnTimerStart_Progress(client, course);
 	GOKZ_OnTimerStart_TimeDiff(client);
+	GOKZ_OnTimerStart_Post_Session(client, course);
 }
 
 public void GOKZ_OnTimerEnd_Post(int client, int course, float time, int teleportsUsed)
 {
 	GOKZ_OnTimerEnd_Recording(client, course, time, teleportsUsed);
 	GOKZ_OnTimerEnd_Progress(client, course);
+	GOKZ_OnTimerEnd_Session(client, course, time);
 }
 
 public void GOKZ_OnPause_Post(int client)
 {
 	GOKZ_OnPause_Recording(client);
+	GOKZ_OnPause_Session(client);
 }
 
 public void GOKZ_OnResume_Post(int client)
 {
 	GOKZ_OnResume_Recording(client);
+	GOKZ_OnResume_Session(client);
 }
 
 public void GOKZ_OnTimerStopped(int client)
 {
 	GOKZ_OnTimerStopped_Recording(client);
 	GOKZ_OnTimerStopped_Progress(client);
+	GOKZ_OnTimerStopped_Session(client);
 }
 
 public void GOKZ_OnCountedTeleport_Post(int client)
@@ -329,6 +352,12 @@ public void GOKZ_OnCountedTeleport_Post(int client)
 	GOKZ_OnCountedTeleport_Recording(client);
 	GOKZ_OnCountedTeleport_Progress(client);
 	GOKZ_OnCountedTeleport_TimeDiff(client);
+	GOKZ_OnCountedTeleport_Session(client);
+}
+
+public void GOKZ_RC_OnRaceInfoChanged(int raceID, RaceInfo prop, int oldValue, int newValue)
+{
+	OnRaceInfoChanged_Session(raceID, prop, newValue);
 }
 
 public void GOKZ_DB_OnDatabaseConnect(DatabaseType DBType)
@@ -365,11 +394,13 @@ public void GOKZ_OnOptionsLoaded(int client)
 public void GOKZ_OnOptionChanged(int client, const char[] option, any newValue)
 {
 	GOKZ_OnOptionChanged_TimeDiff(client, option, newValue);
+	GOKZ_OnOptionChanged_Lead(client, option);
 }
 
 public void GOKZ_OnOptionsMenuReady(TopMenu topMenu)
 {
 	OnOptionsMenuReady_TimeDiff(topMenu);
+	OnOptionsMenuReady_Lead(topMenu);
 }
 
 // =====[ PRIVATE ]=====

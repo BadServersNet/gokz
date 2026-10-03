@@ -7,7 +7,7 @@ void RegisterCommands()
 	RegConsoleCmd("sm_challenge", CommandDuel, "[KZ] Open the duel menu.");
 	RegConsoleCmd("sm_abort", CommandAbort, "[KZ] Abort the race you are hosting.");
 
-	RegAdminCmd("sm_race", CommandRace, ADMFLAG_RESERVATION, "[KZ] Open the race hosting menu.");
+	RegAdminCmd("sm_hostrace", CommandRace, ADMFLAG_RESERVATION, "[KZ] Open the race hosting menu.");
 }
 
 public Action CommandAccept(int client, int args)

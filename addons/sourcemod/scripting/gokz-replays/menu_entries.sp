@@ -5,6 +5,8 @@
 
 
 #define ITEM_INFO_ENTRY_WATCH "watch"
+#define ITEM_INFO_ENTRY_LEAD "lead"
+#define ITEM_INFO_ENTRY_RACE "race"
 #define ITEM_INFO_ENTRY_CODE "code"
 #define ITEM_INFO_ENTRY_URL "url"
 
@@ -317,6 +319,14 @@ static void SelectInfoItem(int client, const char[] info)
 	{
 		WatchSelectedEntry(client);
 	}
+	else if (StrEqual(info, ITEM_INFO_ENTRY_LEAD))
+	{
+		StartSessionWithSelectedEntry(client, ReplaySession_Lead);
+	}
+	else if (StrEqual(info, ITEM_INFO_ENTRY_RACE))
+	{
+		StartSessionWithSelectedEntry(client, ReplaySession_Race);
+	}
 	else if (StrEqual(info, ITEM_INFO_ENTRY_CODE))
 	{
 		PrintSelectedEntryCode(client);
@@ -341,6 +351,28 @@ static void WatchSelectedEntry(int client)
 	}
 	Playback_SetOrigin(client, PlaybackOrigin_Menu);
 	RequestReplayPlayback(client, entry.objectKey, entry.fileSize, entry.inStore);
+}
+
+static void StartSessionWithSelectedEntry(int client, int type)
+{
+	ReplayEntry entry;
+	if (!GetSelectedEntry(client, entry))
+	{
+		return;
+	}
+	if (!CanRaceEntry(entry))
+	{
+		ShowEntryInfo(client, entry);
+		return;
+	}
+	ReplayMenu_SetCurrent(client, ReplayMenu_None);
+	Session_RequestEntry(client, type, entry);
+}
+
+static bool CanRaceEntry(ReplayEntry entry)
+{
+	bool mainCourseRun = entry.replayType == ReplayType_Run && entry.course == 0;
+	return mainCourseRun && StrEqual(entry.mapName, gC_CurrentMap, false);
 }
 
 static void PrintSelectedEntryUrl(int client)
@@ -380,6 +412,14 @@ static void ShowEntryInfo(int client, ReplayEntry entry)
 	bool onThisMap = IsEntryOnThisMap(entry);
 	FormatEx(display, sizeof(display), "%T", "Replay Info - Watch", client);
 	menu.AddItem(ITEM_INFO_ENTRY_WATCH, display, onThisMap ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
+	if (entry.replayType == ReplayType_Run)
+	{
+		int sessionDraw = CanRaceEntry(entry) ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED;
+		FormatEx(display, sizeof(display), "%T", "Replay Info - Lead", client);
+		menu.AddItem(ITEM_INFO_ENTRY_LEAD, display, sessionDraw);
+		FormatEx(display, sizeof(display), "%T", "Replay Info - Race", client);
+		menu.AddItem(ITEM_INFO_ENTRY_RACE, display, sessionDraw);
+	}
 	FormatEx(display, sizeof(display), "%T", "Replay Info - Output Code", client);
 	menu.AddItem(ITEM_INFO_ENTRY_CODE, display);
 	bool canDownload = CanDownloadEntry(entry);

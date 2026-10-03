@@ -31,6 +31,10 @@ void Playback_OnFailed(int client)
 	{
 		return;
 	}
+	if (Session_OnDownloadFailed(client))
+	{
+		return;
+	}
 
 	switch (origin)
 	{
@@ -75,6 +79,10 @@ void RequestReplayPlayback(int client, const char[] key, int fileSize, bool inSt
 
 void StartReplayFromCache(int client, const char[] cachePath)
 {
+	if (Session_OnReplayCached(client, cachePath))
+	{
+		return;
+	}
 	if (!StartReplayBot(client, cachePath))
 	{
 		Playback_OnFailed(client);

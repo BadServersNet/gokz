@@ -11,6 +11,8 @@ void CreateNatives()
 	CreateNative("GOKZ_RP_LoadJumpReplay", Native_RP_LoadJumpReplay);
 	CreateNative("GOKZ_RP_LoadRunReplay", Native_RP_LoadRunReplay);
 	CreateNative("GOKZ_RP_GetProgress", Native_RP_GetProgress);
+	CreateNative("GOKZ_RP_GetSessionInfo", Native_RP_GetSessionInfo);
+	CreateNative("GOKZ_RP_GetBotOwner", Native_RP_GetBotOwner);
 	CreateNative("GOKZ_RP_UpdateReplayControlMenu", Native_RP_UpdateReplayControlMenu);
 	CreateNative("GOKZ_RP_ImportReplay", Native_RP_ImportReplay);
 	CreateNative("GOKZ_RP_GetPendingUploadCount", Native_RP_GetPendingUploadCount);
@@ -50,6 +52,19 @@ public int Native_RP_GetProgress(Handle plugin, int numParams)
 	SetNativeCellRef(3, rank);
 	SetNativeCellRef(4, total);
 	return view_as<int>(tracked);
+}
+
+public int Native_RP_GetSessionInfo(Handle plugin, int numParams)
+{
+	ReplaySessionInfo info;
+	bool active = Session_GetInfo(GetNativeCell(1), info);
+	SetNativeArray(2, info, sizeof(ReplaySessionInfo));
+	return view_as<int>(active);
+}
+
+public int Native_RP_GetBotOwner(Handle plugin, int numParams)
+{
+	return Session_GetBotOwner(GetNativeCell(1));
 }
 
 public int Native_RP_UpdateReplayControlMenu(Handle plugin, int numParams)

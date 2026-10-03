@@ -9,6 +9,8 @@ void RegisterCommands()
 	RegConsoleCmd("sm_recentreplays", CommandRecentReplays, "[KZ] Browse the most recent replays. Usage: !recentreplays [all|map]");
 	RegConsoleCmd("sm_rrp", CommandRecentReplays, "[KZ] Browse the most recent replays. Usage: !rrp [all|map]");
 	RegConsoleCmd("sm_progressreplay", CommandProgressReplay, "[KZ] Measure your map progress against a specific replay instead of the server record. Usage: !progressreplay [code]");
+	RegConsoleCmd("sm_lead", CommandLead, "[KZ] Toggle a bot that leads you along a run of this map, the top run unless a code is given. Usage: !lead [code]");
+	RegConsoleCmd("sm_race", CommandRace, "[KZ] Toggle racing a bot that runs with your timer, the top run unless a code is given. Usage: !race [code]");
 	RegConsoleCmd("sm_progressmenu", CommandProgressMenu, "[KZ] Toggle the live map progress leaderboard.");
 	RegConsoleCmd("sm_timediff", CommandTimeDiff, "[KZ] Toggle periodic time diff messages against your PB replay. Usage: !timediff [seconds|auto|off]");
 	RegConsoleCmd("sm_replaycontrols", CommandReplayControls, "[KZ] Toggle the replay control menu.");
@@ -224,6 +226,18 @@ public Action CommandProgressReplay(int client, int args)
 		return Plugin_Handled;
 	}
 	Progress_RequestClientRoute(client, code);
+	return Plugin_Handled;
+}
+
+public Action CommandLead(int client, int args)
+{
+	Session_Command(client, ReplaySession_Lead, args);
+	return Plugin_Handled;
+}
+
+public Action CommandRace(int client, int args)
+{
+	Session_Command(client, ReplaySession_Race, args);
 	return Plugin_Handled;
 }
 

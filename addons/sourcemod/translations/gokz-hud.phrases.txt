@@ -189,6 +189,62 @@
 		"#format"	"{1:.1f},{2:d},{3:d}"
 		"en"		"Progress: {1}%% (#{2}/{3})"
 	}
+	"Session Text - Lead"
+	{
+		"en"		"Lead"
+	}
+	"Session Text - Race"
+	{
+		"en"		"Race"
+	}
+	"Session Text - Progress"
+	{
+		"#format"	"{1:d},{2:d}"
+		"en"		"You {1}%% / Bot {2}%%"
+	}
+	"Session Text - Loading"
+	{
+		"en"		"Loading"
+	}
+	"Session Text - Countdown"
+	{
+		"#format"	"{1:d}"
+		"en"		"Starting in {1}"
+	}
+	"Session Text - Ready"
+	{
+		"en"		"Start your timer"
+	}
+	"Session Text - Following"
+	{
+		"en"		"Following"
+	}
+	"Session Text - Waiting"
+	{
+		"en"		"Waiting"
+	}
+	"Session Text - Racing"
+	{
+		"en"		"Racing"
+	}
+	"Session Text - Done"
+	{
+		"en"		"Done"
+	}
+	"Session Text - Won"
+	{
+		"#format"	"{1:.2f}"
+		"en"		"Won by {1}s"
+	}
+	"Session Text - Lost"
+	{
+		"#format"	"{1:.2f}"
+		"en"		"Lost by {1}s"
+	}
+	"Session Text - Tied"
+	{
+		"en"		"Tied"
+	}
 	"Info Panel Text - Speed"
 	{
 		"en"		"Speed"

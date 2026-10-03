@@ -33,7 +33,7 @@ bool UpdateReplayControlMenu(int client)
 	
 	int botClient = GetObserverTarget(client);
 	int bot = GetBotFromClient(botClient);
-	if (bot == -1)
+	if (bot == -1 || Session_IsBotOwned(bot))
 	{
 		return false;
 	}

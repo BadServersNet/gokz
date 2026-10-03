@@ -29,6 +29,24 @@ enum
 	REPLAYTYPE_COUNT
 };
 
+enum
+{
+	ReplaySession_None = 0,
+	ReplaySession_Lead,
+	ReplaySession_Race
+};
+
+enum
+{
+	ReplaySessionState_None = 0,
+	ReplaySessionState_Loading,
+	ReplaySessionState_Countdown,
+	ReplaySessionState_Ready,
+	ReplaySessionState_Running,
+	ReplaySessionState_Waiting,
+	ReplaySessionState_Finished
+};
+
 enum ReplaySaveState
 {
 	ReplaySave_Enabled = 0,
@@ -147,6 +165,23 @@ enum struct RunReplayHeader
 	int teleportsUsed;
 }
 
+enum struct ReplaySessionInfo
+{
+	int type;
+	int state;
+	char alias[MAX_NAME_LENGTH];
+	float runTime;
+	float countdown;
+	bool go;
+	float playerProgress;
+	float botProgress;
+	bool hasTimeDiff;
+	float timeDiff;
+	bool botFinished;
+	bool won;
+	float resultDiff;
+}
+
 // NOTE: Make sure to change the RPDELTA_* enum, TickDataToArray() and TickDataFromArray() when adding/removing stuff from this!!!
 enum struct ReplayTickData
 {
@@ -199,7 +234,16 @@ enum struct ReplayTickData
 #define RP_CODE_LENGTH 6
 #define RP_CODE_BUFFER 9
 #define RP_CODE_INSERT_ATTEMPTS 3
-#define RP_MAX_BOTS 4
+#define RP_MAX_BOTS MAXPLAYERS
+#define RP_BOT_FREE_SLOTS 1
+#define RP_BOT_JOIN_TIMEOUT 5.0
+#define RP_SESSION_UPDATE_INTERVAL 0.1
+#define RP_SESSION_LOOKUP_TIMEOUT 15.0
+#define RP_SESSION_BOT_COLLISION_GROUP 2
+#define RP_SESSION_SYNC_TOLERANCE 4
+#define RP_RACE_COUNTDOWN_TIME 5.0
+#define RP_LEAD_TRAIL_INTERVAL 4
+#define RP_LEAD_TRAIL_LIFE 2.0
 #define RP_PLAYBACK_BREATHER_TIME 2.0
 #define RP_MIN_CHEATER_REPLAY_LENGTH 30 // 30 seconds
 #define RP_MAX_CHEATER_REPLAY_LENGTH 120 // 2 minutes
@@ -328,6 +372,10 @@ native bool GOKZ_RP_LoadRunReplay(int client, int timeID);
  */
 native bool GOKZ_RP_GetProgress(int client, float &progress, int &rank, int &total);
 
+native bool GOKZ_RP_GetSessionInfo(int client, any[] info);
+
+native int GOKZ_RP_GetBotOwner(int client);
+
 /**
  * Called by the HUD to show the replay control menu.
  *
@@ -392,6 +440,8 @@ public void __pl_gokz_replays_SetNTVOptional()
 	MarkNativeAsOptional("GOKZ_RP_LoadJumpReplay");
 	MarkNativeAsOptional("GOKZ_RP_LoadRunReplay");
 	MarkNativeAsOptional("GOKZ_RP_GetProgress");
+	MarkNativeAsOptional("GOKZ_RP_GetSessionInfo");
+	MarkNativeAsOptional("GOKZ_RP_GetBotOwner");
 	MarkNativeAsOptional("GOKZ_RP_UpdateReplayControlMenu");
 	MarkNativeAsOptional("GOKZ_RP_ImportReplay");
 	MarkNativeAsOptional("GOKZ_RP_GetPendingUploadCount");

@@ -8,6 +8,7 @@
 
 
 
+static ConVar gCV_gokz_replay_max_bots;
 static int preAndPostRunTickCount;
 
 static int playbackTick[RP_MAX_BOTS];
@@ -17,6 +18,7 @@ static float breatherStartTime[RP_MAX_BOTS];
 
 // Original bot caller, needed for OnClientPutInServer callback
 static int botCaller[RP_MAX_BOTS];
+static float botAddedTime[RP_MAX_BOTS];
 // Original bot name after creation by bot_add, needed for bot removal
 static char botName[RP_MAX_BOTS][MAX_NAME_LENGTH];
 static bool botInGame[RP_MAX_BOTS];
@@ -59,6 +61,11 @@ static float botLandingSpeed[RP_MAX_BOTS];
 
 // =====[ PUBLIC ]=====
 
+void Playback_CreateConVars()
+{
+	gCV_gokz_replay_max_bots = AutoExecConfig_CreateConVar("gokz_replay_max_bots", "0", "Maximum number of replay bots playing at once, including lead and race bots (0 = as many as free player slots allow).", _, true, 0.0, true, float(RP_MAX_BOTS));
+}
+
 bool CanClientLoadReplay(int client)
 {
 	if (IsSafeguardBlocking(client))
@@ -67,13 +74,18 @@ bool CanClientLoadReplay(int client)
 		GOKZ_PlayErrorSound(client);
 		return false;
 	}
-	if (GetBotsInUse() >= RP_MAX_BOTS)
+	return CheckBotAvailable(client);
+}
+
+bool CheckBotAvailable(int client)
+{
+	if (CanAddBot())
 	{
-		GOKZ_PrintToChat(client, true, "%t", "No Bots Available");
-		GOKZ_PlayErrorSound(client);
-		return false;
+		return true;
 	}
-	return true;
+	GOKZ_PrintToChat(client, true, "%t", "No Bots Available");
+	GOKZ_PlayErrorSound(client);
+	return false;
 }
 
 bool StartReplayBot(int client, const char[] path)
@@ -82,25 +94,131 @@ bool StartReplayBot(int client, const char[] path)
 	{
 		return false;
 	}
+	return AddReplayBot(client, path, false) != -1;
+}
 
+int Playback_StartSessionBot(int client, const char[] path)
+{
+	if (!CheckBotAvailable(client))
+	{
+		return -1;
+	}
+	return AddReplayBot(client, path, true);
+}
+
+static bool IsSessionCompatible(int bot)
+{
+	return botReplayVersion[bot] == 2 && botReplayType[bot] == ReplayType_Run;
+}
+
+bool Playback_IsBotPending(int bot)
+{
+	return !botInGame[bot] && botCaller[bot] != 0 && GetGameTime() - botAddedTime[bot] < RP_BOT_JOIN_TIMEOUT;
+}
+
+bool Playback_IsBotInGame(int bot)
+{
+	return botInGame[bot] && botDataLoaded[bot];
+}
+
+int Playback_GetBotClient(int bot)
+{
+	return botClient[bot];
+}
+
+int Playback_GetTick(int bot)
+{
+	return playbackTick[bot];
+}
+
+int Playback_GetLastTick(int bot)
+{
+	return playbackTickData[bot].Length - 1;
+}
+
+int Playback_GetRunStartTick()
+{
+	return preAndPostRunTickCount;
+}
+
+int Playback_GetRunEndTick(int bot)
+{
+	int runEnd = preAndPostRunTickCount + botTimeTicks[bot];
+	return IntMin(runEnd, Playback_GetLastTick(bot));
+}
+
+void Playback_SetTick(int bot, int tick)
+{
+	int lastTick = Playback_GetLastTick(bot);
+	int clamped = IntMax(1, IntMin(tick, lastTick));
+	PlaybackSkipToTick(bot, clamped);
+}
+
+void Playback_SetPaused(int bot, bool paused)
+{
+	botPlaybackPaused[bot] = paused;
+}
+
+void Playback_CancelBot(int bot)
+{
+	if (playbackTickData[bot] != null)
+	{
+		playbackTickData[bot].Clear();
+	}
+	botDataLoaded[bot] = false;
+	if (!botInGame[bot])
+	{
+		return;
+	}
+	CancelReplayControlsForBot(bot);
+	ServerCommand("bot_kick %s", botName[bot]);
+}
+
+static bool CanAddBot()
+{
+	int limit = gCV_gokz_replay_max_bots.IntValue;
+	int inUse = GetBotsInUse();
+	if (limit > 0 && inUse >= limit)
+	{
+		return false;
+	}
+	if (GetUnusedBot() == -1)
+	{
+		return false;
+	}
+	int occupied = GetClientCount(false) + GetPendingBotCount();
+	return occupied < MaxClients - RP_BOT_FREE_SLOTS;
+}
+
+static int AddReplayBot(int client, const char[] path, bool session)
+{
 	int bot = GetUnusedBot();
 	if (bot == -1)
 	{
 		LogError("Unused bot could not be found even though only %d out of %d are known to be in use.",
 				 GetBotsInUse(), RP_MAX_BOTS);
 		GOKZ_PlayErrorSound(client);
-		return false;
+		return -1;
 	}
 
 	if (!LoadPlayback(client, bot, path))
 	{
 		GOKZ_PlayErrorSound(client);
-		return false;
+		return -1;
+	}
+	if (session && !IsSessionCompatible(bot))
+	{
+		playbackTickData[bot].Clear();
+		botDataLoaded[bot] = false;
+		GOKZ_PrintToChat(client, true, "%t", "Session - Old Replay");
+		GOKZ_PlayErrorSound(client);
+		return -1;
 	}
 
 	ServerCommand("bot_add");
 	botCaller[bot] = client;
-	return true;
+	botAddedTime[bot] = GetGameTime();
+	return bot;
 }
 
 static bool IsSafeguardBlocking(int client)
@@ -235,6 +353,10 @@ void TrySkipToTime(int client, int seconds)
 	
 	int tick = seconds * 128 + preAndPostRunTickCount;
 	int bot = GetBotFromClient(GetObserverTarget(client));
+	if (bot == -1 || Session_IsBotOwned(bot))
+	{
+		return;
+	}
 	
 	if (tick >= 0 && tick < playbackTickData[bot].Length)
 	{
@@ -286,10 +408,19 @@ void OnClientPutInServer_Playback(int client)
 			GetClientName(client, botName[bot], sizeof(botName[]));
 			// The bot won't receive its weapons properly if we don't wait a frame
 			RequestFrame(SetBotStuff, bot);
-			if (IsValidClient(botCaller[bot]))
+			int caller = botCaller[bot];
+			botCaller[bot] = 0;
+			if (!botDataLoaded[bot])
 			{
-				MakePlayerSpectate(botCaller[bot], botClient[bot]);
-				botCaller[bot] = 0;
+				ServerCommand("bot_kick %s", botName[bot]);
+			}
+			else if (Session_ClaimsBot(bot))
+			{
+				Session_OnBotJoined(bot, client);
+			}
+			else if (IsValidClient(caller))
+			{
+				MakePlayerSpectate(caller, botClient[bot]);
 			}
 			break;
 		}
@@ -311,6 +442,7 @@ void OnClientDisconnect_Playback(int client)
 			playbackTickData[bot].Clear(); // Clear it all out
 			botDataLoaded[bot] = false;
 		}
+		Session_OnBotLeft(bot);
 	}
 }
 
@@ -925,6 +1057,10 @@ void PlaybackVersion2(int client, int bot, int &buttons, float vel[3], float ang
 		playbackTickData[bot].GetArray(IntMax(playbackTick[bot] - 1, 0), prevTickData);
 		TeleportEntity(client, currentTickData.origin, currentTickData.angles, view_as<float>( { 0.0, 0.0, 0.0 } ));
 		
+		if (Session_IsBotOwned(bot))
+		{
+			return;
+		}
 		if (!inBreather[bot])
 		{
 			// Start the breather period
@@ -959,7 +1095,7 @@ void PlaybackVersion2(int client, int bot, int &buttons, float vel[3], float ang
 				break;
 			}
 		}
-		if (spec == MAXPLAYERS + 1 && !IsReplayBotControlled(bot, botClient[bot]))
+		if (spec == MAXPLAYERS + 1 && !IsReplayBotControlled(bot, botClient[bot]) && !Session_IsBotOwned(bot))
 		{
 			playbackTickData[bot].Clear();
 			botDataLoaded[bot] = false;
@@ -1259,17 +1395,10 @@ public void RequestFrame_SetBotStuff(int userid)
 	{
 		return;
 	}
-	int bot;
-	for (bot = 0; bot <= RP_MAX_BOTS; bot++)
+	int bot = GetBotFromClient(client);
+	if (bot == -1)
 	{
-		if (botClient[bot] == client)
-		{
-			break;
-		}
-		else if (bot == RP_MAX_BOTS)
-		{
-			return;
-		}
+		return;
 	}
 	// Set the bot's team based on if it's NUB or PRO
 	if (botReplayType[bot] == ReplayType_Run 
@@ -1327,8 +1456,14 @@ public void RequestFrame_SetBotStuff(int userid)
 static void SetBotClanTag(int bot)
 {
 	char tag[MAX_NAME_LENGTH];
+	char sessionTag[16];
 
-	if (botReplayType[bot] == ReplayType_Run)
+	if (Session_GetBotTag(bot, sessionTag, sizeof(sessionTag)))
+	{
+		FormatEx(tag, sizeof(tag), "%s %s",
+			gC_ModeNamesShort[botMode[bot]], sessionTag);
+	}
+	else if (botReplayType[bot] == ReplayType_Run)
 	{
 		if (botCourse[bot] == 0)
 		{
@@ -1401,7 +1536,7 @@ static int GetBotsInUse()
 	int botsInUse = 0;
 	for (int bot; bot < RP_MAX_BOTS; bot++)
 	{
-		if (botInGame[bot] && botDataLoaded[bot])
+		if (Playback_IsBotInGame(bot) || Playback_IsBotPending(bot))
 		{
 			botsInUse++;
 		}
@@ -1409,12 +1544,25 @@ static int GetBotsInUse()
 	return botsInUse;
 }
 
+static int GetPendingBotCount()
+{
+	int pending = 0;
+	for (int bot; bot < RP_MAX_BOTS; bot++)
+	{
+		if (Playback_IsBotPending(bot))
+		{
+			pending++;
+		}
+	}
+	return pending;
+}
+
 // Returns a bot that isn't currently replaying, or -1 if no unused bots found
 static int GetUnusedBot()
 {
 	for (int bot = 0; bot < RP_MAX_BOTS; bot++)
 	{
-		if (!botInGame[bot])
+		if (!botInGame[bot] && !Playback_IsBotPending(bot))
 		{
 			return bot;
 		}

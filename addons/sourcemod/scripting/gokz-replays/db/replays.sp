@@ -248,6 +248,24 @@ void DB_LookupProgressReplay(int client, const char[] code)
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_ProgressReplay, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
 }
 
+void DB_LoadSessionCandidates(int client, int token, const char[] map)
+{
+	char mapEscaped[129];
+	SQL_EscapeString(gH_DB, map, mapEscaped, sizeof(mapEscaped));
+	char query[4096];
+	FormatEx(query, sizeof(query), sql_replays_getroute, mapEscaped, RP_PROGRESS_ROUTE_CANDIDATES);
+	ExecuteSessionQuery(client, token, query, DB_TxnSuccess_SessionCandidates);
+}
+
+void DB_LookupSessionReplay(int client, int token, const char[] code)
+{
+	char codeEscaped[RP_CODE_BUFFER * 2 + 1];
+	SQL_EscapeString(gH_DB, code, codeEscaped, sizeof(codeEscaped));
+	char query[4096];
+	FormatEx(query, sizeof(query), sql_replays_getruncode, codeEscaped);
+	ExecuteSessionQuery(client, token, query, DB_TxnSuccess_SessionReplay);
+}
+
 void DB_PrintRecentReplayKeys(int client)
 {
 	char query[4096];
@@ -531,6 +549,46 @@ public void DB_TxnSuccess_ProgressReplay(Handle db, DataPack data, int numQuerie
 	Progress_OnClientRouteReplay(client, entry);
 }
 
+public void DB_TxnSuccess_SessionCandidates(Handle db, DataPack data, int numQueries, Handle[] results, any[] queryData)
+{
+	data.Reset();
+	int client = GetClientOfUserId(data.ReadCell());
+	int token = data.ReadCell();
+	delete data;
+
+	if (!IsValidClient(client))
+	{
+		return;
+	}
+
+	ArrayList candidates = new ArrayList(sizeof(ReplayEntry));
+	ReadReplayEntries(results[0], candidates);
+	Session_OnCandidates(client, token, candidates);
+	delete candidates;
+}
+
+public void DB_TxnSuccess_SessionReplay(Handle db, DataPack data, int numQueries, Handle[] results, any[] queryData)
+{
+	data.Reset();
+	int client = GetClientOfUserId(data.ReadCell());
+	int token = data.ReadCell();
+	delete data;
+
+	if (!IsValidClient(client))
+	{
+		return;
+	}
+	if (!SQL_FetchRow(results[0]))
+	{
+		Session_OnReplayNotFound(client, token);
+		return;
+	}
+
+	ReplayEntry entry;
+	ReadReplayEntry(results[0], entry);
+	Session_OnReplayEntry(client, token, entry);
+}
+
 public void DB_TxnSuccess_PrintRecentReplayKeys(Handle db, DataPack data, int numQueries, Handle[] results, any[] queryData)
 {
 	data.Reset();
@@ -768,6 +826,17 @@ static void ListReplayEntries(int client, ReplayMenu kind, Transaction txn, int 
 	data.WriteCell(kind);
 	data.WriteCell(recordQueries);
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_ReplayEntries, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
+}
+
+static void ExecuteSessionQuery(int client, int token, const char[] query, SQLTxnSuccess onSuccess)
+{
+	DataPack data = new DataPack();
+	data.WriteCell(GetClientUserId(client));
+	data.WriteCell(token);
+
+	Transaction txn = SQL_CreateTransaction();
+	txn.AddQuery(query);
+	SQL_ExecuteTransaction(gH_DB, txn, onSuccess, DB_TxnFailure_Generic_DataPack, data, DBPrio_Normal);
 }
 
 static void LookupReplay(int client, const char[] query)

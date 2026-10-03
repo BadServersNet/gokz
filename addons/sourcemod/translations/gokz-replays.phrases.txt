@@ -487,4 +487,138 @@
 		"chi"		"{red}无效的计时."
 		"ru"		"{red}Неправильное время."
 	}
+	"Replay Menu - Lead Top Run"
+	{
+		"en"		"Lead the Top Run"
+	}
+	"Replay Menu - Race Top Run"
+	{
+		"en"		"Race the Top Run"
+	}
+	"Replay Menu - Stop Lead"
+	{
+		"en"		"Stop Leading"
+	}
+	"Replay Menu - Stop Race"
+	{
+		"en"		"Stop Racing"
+	}
+	"Replay Info - Lead"
+	{
+		"en"		"Lead"
+	}
+	"Replay Info - Race"
+	{
+		"en"		"Race"
+	}
+	"Options Menu - Lead Distance"
+	{
+		"en"		"Lead bot distance"
+	}
+	"Lead Distance - Close"
+	{
+		"en"		"Close"
+	}
+	"Lead Distance - Normal"
+	{
+		"en"		"Normal"
+	}
+	"Lead Distance - Far"
+	{
+		"en"		"Far"
+	}
+	"Lead - Distance Set"
+	{
+		"#format"	"{1:s}"
+		"en"		"{grey}The lead bot now waits at {default}{1}{grey} distance."
+	}
+	"Lead - Loading"
+	{
+		"#format"	"{1:s}"
+		"en"		"{grey}Downloading {lime}{1}{grey}'s run, your lead bot appears when it is ready."
+	}
+	"Lead - Started"
+	{
+		"#format"	"{1:s},{2:s},{3:s}"
+		"en"		"{grey}Follow {lime}{1}{grey}'s {default}{2} {3}{grey} run. It waits when you fall behind. Type {default}!lead{grey} to stop."
+	}
+	"Lead - Stopped"
+	{
+		"en"		"{grey}Your lead bot has been removed."
+	}
+	"Race - Loading"
+	{
+		"#format"	"{1:s}"
+		"en"		"{grey}Downloading {lime}{1}{grey}'s run, your race starts when it is ready."
+	}
+	"Race - Countdown"
+	{
+		"#format"	"{1:s},{2:s},{3:s}"
+		"en"		"{grey}Get ready to race {lime}{1}{grey}'s {default}{2} {3}{grey} run. The bot starts with your timer, restart it for another heat."
+	}
+	"Race - No Start"
+	{
+		"en"		"{darkred}No main course start was found. Start your timer when you are ready."
+	}
+	"Race - Bot Finished"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"{lime}{1}{grey} finished in {default}{2}{grey}."
+	}
+	"Race - Won"
+	{
+		"#format"	"{1:s},{2:.2f},{3:s},{4:s}"
+		"en"		"{grey}You beat {lime}{1}{grey} by {lime}{2}s{grey}! ({default}{3}{grey} vs {default}{4}{grey})"
+	}
+	"Race - Lost"
+	{
+		"#format"	"{1:s},{2:.2f},{3:s},{4:s}"
+		"en"		"{lime}{1}{grey} beat you by {red}{2}s{grey}. ({default}{3}{grey} vs {default}{4}{grey})"
+	}
+	"Race - Tied"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"{grey}You tied {lime}{1}{grey} with {default}{2}{grey}!"
+	}
+	"Race - Stopped"
+	{
+		"en"		"{grey}Your race bot has been removed."
+	}
+	"Session - Must Be Alive"
+	{
+		"en"		"{darkred}You must be playing to use a lead or race bot."
+	}
+	"Session - In Race"
+	{
+		"en"		"{darkred}You cannot use a lead or race bot while in a race with other players."
+	}
+	"Session - No Replay"
+	{
+		"en"		"{darkred}There is no main course run replay for this map yet."
+	}
+	"Session - Not A Run"
+	{
+		"en"		"{darkred}No run replay has that code."
+	}
+	"Session - Wrong Map"
+	{
+		"#format"	"{1:s}"
+		"en"		"{darkred}That replay was recorded on {1}. Only main course runs of this map can be led or raced."
+	}
+	"Session - Wrong Course"
+	{
+		"en"		"{darkred}Only main course runs can be led or raced."
+	}
+	"Session - Unavailable"
+	{
+		"en"		"{darkred}That replay is not available on this server."
+	}
+	"Session - Old Replay"
+	{
+		"en"		"{darkred}That replay uses an old format that cannot be led or raced."
+	}
+	"Session - Bot Left"
+	{
+		"en"		"{darkred}Your lead or race bot left the server."
+	}
 }

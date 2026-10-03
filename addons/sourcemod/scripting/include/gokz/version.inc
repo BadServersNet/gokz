@@ -9,4 +9,4 @@
 
 
 
-#define GOKZ_VERSION "5.0.0"
+#define GOKZ_VERSION "5.1.0"
