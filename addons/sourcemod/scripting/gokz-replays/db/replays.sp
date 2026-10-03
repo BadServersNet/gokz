@@ -585,11 +585,6 @@ static void InsertReplayAttempt(ReplayInsert insert)
 
 	char query[2048];
 	Transaction txn = SQL_CreateTransaction();
-	if (insert.replayType == ReplayType_Jump)
-	{
-		FormatEx(query, sizeof(query), sql_replays_delete_by_jump, insert.recordID);
-		txn.AddQuery(query);
-	}
 	FormatEx(query, sizeof(query), sql_replays_update, insert.fileSize, inStoreValue, mapEscaped, createdValue, keyEscaped);
 	txn.AddQuery(query);
 	if (g_DBType == DatabaseType_SQLite)

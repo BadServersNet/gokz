@@ -36,10 +36,14 @@ For more information about what each plugin does, please see [PLUGINS.md](PLUGIN
 ### Installing
 
  * Ensure your server is up to date and meets the above requirements.
- * Download and extract `GOKZ-latest.zip` from the [Releases](https://github.com/KZGlobalTeam/gokz/releases) to `csgo`.
+ * Download and extract the full GOKZ archive from the [fork releases](https://github.com/BadServersNet/gokz/releases) to `csgo`.
  * Add a MySQL or SQLite database called `gokz` to `csgo/addons/sourcemod/configs/databases.cfg`.
  * When the plugins first load, various configuration files will be auto-generated and can be found in `csgo/cfg/sourcemod/gokz`.
  * Use `sm_updatemappool` to populate the ranked map pool with those in `csgo/cfg/sourcemod/gokz/gokz-localranks-mappool.cfg`.
+
+### Database migrations
+
+For MariaDB, apply the versioned [database migrations](database/README.md) before installing or updating the plugins. They preserve runs and jumps, add indexes and website projections, and require a maintenance window with all writers stopped. SQLite retention setup is automatic.
 
 ### Replay Storage
 
@@ -56,7 +60,7 @@ Please refer to the forum for a [more detailed installation guide](https://forum
 
 ### Updating
 
- * Minor updates - Download and extract `GOKZ-latest-upgrade.zip` from the [Releases](https://github.com/KZGlobalTeam/gokz/releases) to `csgo`.
+ * Minor updates - Download and extract the GOKZ upgrade archive from the [fork releases](https://github.com/BadServersNet/gokz/releases) to `csgo`.
  * Major updates - Check the new version's release notes for specific instructions.
 
 ### Commands

@@ -177,9 +177,8 @@ INSERT INTO Times (SteamID32, MapCourseID, Mode, Style, RunTime, Teleports) \
     FROM MapCourses \
     WHERE MapID=%d AND Course=%d";
 
-char sql_times_delete[] = "\
-DELETE FROM Times \
-    WHERE TimeID=%d";
+char sqlite_times_delete[] = "\
+INSERT OR IGNORE INTO InvalidTimes (TimeID) VALUES (%d)";
 
 
 
@@ -227,86 +226,45 @@ char sql_jumpstats_insert[] = "\
 INSERT INTO Jumpstats (SteamID32, JumpType, Mode, Distance, IsBlockJump, Block, Strafes, Sync, Pre, Max, Airtime) \
     VALUES (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)";
 
-char sql_jumpstats_update[] = "\
-UPDATE Jumpstats \
-    SET \
-        SteamID32=%d, \
-        JumpType=%d, \
-        Mode=%d, \
-        Distance=%d, \
-        IsBlockJump=%d, \
-        Block=%d, \
-        Strafes=%d, \
-        Sync=%d, \
-        Pre=%d, \
-        Max=%d, \
-        Airtime=%d \
-    WHERE \
-        JumpID=%d";
 
 char sql_jumpstats_getrecord[] = "\
 SELECT JumpID, Distance, Block \
     FROM \
-        Jumpstats \
+        ValidJumpstats \
     WHERE \
         SteamID32=%d AND \
         JumpType=%d AND \
         Mode=%d AND \
         IsBlockJump=%d \
-    ORDER BY Block DESC, Distance DESC";
+    ORDER BY Block DESC, Distance DESC, Created, JumpID LIMIT 1";
 
-char sql_jumpstats_deleterecord[] = "\
-DELETE \
-    FROM \
-        Jumpstats \
-    WHERE \
-        JumpID = \
-        ( SELECT * FROM ( \
-            SELECT JumpID \
-                FROM \
-                    Jumpstats \
-                WHERE \
-                    SteamID32=%d AND \
-                    JumpType=%d AND \
-                    Mode=%d AND \
-                    IsBlockJump=%d \
-                ORDER BY Block DESC, Distance DESC \
-                LIMIT 1 \
-			) AS tmp \
-        )";
+char sqlite_jumpstats_deleterecord[] = "INSERT OR IGNORE INTO InvalidJumps (JumpID) SELECT JumpID FROM ValidJumpstats WHERE SteamID32=%d AND JumpType=%d AND Mode=%d AND IsBlockJump=%d ORDER BY Block DESC, Distance DESC, Created, JumpID LIMIT 1";
+char mysql_jumpstats_deleterecord[] = "INSERT IGNORE INTO InvalidJumps (JumpID) SELECT JumpID FROM ValidJumpstats WHERE SteamID32=%d AND JumpType=%d AND Mode=%d AND IsBlockJump=%d ORDER BY Block DESC, Distance DESC, Created, JumpID LIMIT 1";
 
-char sql_jumpstats_deleteallrecords[] = "\
-DELETE \
-	FROM \
-		Jumpstats \
-	WHERE \
-		SteamID32 = %d;";
+char sqlite_jumpstats_deleteallrecords[] = "INSERT OR IGNORE INTO InvalidJumps (JumpID) SELECT JumpID FROM ValidJumpstats WHERE SteamID32=%d";
+char mysql_jumpstats_deleteallrecords[] = "INSERT IGNORE INTO InvalidJumps (JumpID) SELECT JumpID FROM ValidJumpstats WHERE SteamID32=%d";
 
-char sql_jumpstats_deletejump[] = "\
-DELETE \
-	FROM \
-		Jumpstats \
-	WHERE \
-		JumpID = %d;";
+char sqlite_jumpstats_deletejump[] = "INSERT OR IGNORE INTO InvalidJumps (JumpID) VALUES (%d)";
+char mysql_jumpstats_deletejump[] = "INSERT IGNORE INTO InvalidJumps (JumpID) VALUES (%d)";
 
 char sql_jumpstats_getpbs[] = "\
 SELECT MAX(Distance), Mode, JumpType \
     FROM \
-        Jumpstats \
+        ValidJumpstats \
     WHERE \
-        SteamID32=%d \
+        IsBlockJump=0 AND SteamID32=%d \
     GROUP BY \
     	Mode, JumpType";
 
 char sql_jumpstats_getblockpbs[] = "\
 SELECT MAX(js.Distance), js.Mode, js.JumpType, js.Block \
 	FROM \
-		Jumpstats js \
+		ValidJumpstats js \
 	INNER JOIN \
 	( \
 		SELECT Mode, JumpType, MAX(BLOCK) Block \
 			FROM \
-				Jumpstats \
+				ValidJumpstats \
 			WHERE \
 				IsBlockJump=1 AND \
 				SteamID32=%d \
@@ -419,3 +377,9 @@ SELECT last_insert_rowid()";
 
 char mysql_last_insert_id[] = "\
 SELECT LAST_INSERT_ID()";
+
+char mysql_times_delete[] = "INSERT IGNORE INTO InvalidTimes (TimeID) VALUES (%d)";
+
+char mysql_jumpstats_getrecord[] = "SELECT JumpID, Distance, Block FROM JumpPersonalBests WHERE SteamID32=%d AND JumpType=%d AND Mode=%d AND IsBlockJump=%d";
+char mysql_jumpstats_getpbs[] = "SELECT Distance, Mode, JumpType FROM JumpPersonalBests WHERE IsBlockJump=0 AND SteamID32=%d";
+char mysql_jumpstats_getblockpbs[] = "SELECT Distance, Mode, JumpType, Block FROM JumpPersonalBests WHERE IsBlockJump=1 AND SteamID32=%d";

@@ -6,6 +6,11 @@
 
 void DB_CreateTables()
 {
+	if (g_DBType != DatabaseType_SQLite)
+	{
+		return;
+	}
+
 	Transaction txn = SQL_CreateTransaction();
 
 	switch (g_DBType)
@@ -17,10 +22,7 @@ void DB_CreateTables()
 			txn.AddQuery(sqlite_replays_index_jumpid);
 			txn.AddQuery(sqlite_replays_index_steamid);
 		}
-		case DatabaseType_MySQL:
-		{
-			txn.AddQuery(mysql_replays_create);
-		}
+
 	}
 
 	SQL_ExecuteTransaction(gH_DB, txn, _, DB_TxnFailure_Generic, _, DBPrio_High);

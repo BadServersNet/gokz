@@ -6,6 +6,11 @@
 
 void DB_CreateTables()
 {
+	if (g_DBType != DatabaseType_SQLite)
+	{
+		return;
+	}
+
 	Transaction txn = SQL_CreateTransaction();
 
 	// Create/alter database tables
@@ -15,10 +20,7 @@ void DB_CreateTables()
 		{
 			txn.AddQuery(sqlite_maps_alter1);
 		}
-		case DatabaseType_MySQL:
-		{
-			txn.AddQuery(mysql_maps_alter1);
-		}
+
 	}
 
 	// No error logs for this transaction as it will always throw an error

@@ -25,27 +25,27 @@
 	"Best Jump Deleted"
 	{
 		"#format"	"{1:s},{2:s},{3:s},{4:d},{5:d}"
-		"en"		"{grey}Deleted the {purple}{1} {lightgreen}{2}{default}{3} record of '{default}STEAM_1:{4}:{5}{grey}'"
-		"chi"		"{grey}删除玩家 '{default}STEAM_1:{4}:{5}{grey}' 的 {purple}{1} {lightgreen}{2}{default}{3} 跳跃记录"
-		"ru"		"{grey}Удален {purple}{1} {lightgreen}{2}{default}{3} рекорд у '{default}STEAM_1:{4}:{5}{grey}'"
+		"en"		"{grey}Excluded the {purple}{1} {lightgreen}{2}{default}{3} record of '{default}STEAM_1:{4}:{5}{grey}'"
+		"chi"		"{grey}排除玩家 '{default}STEAM_1:{4}:{5}{grey}' 的 {purple}{1} {lightgreen}{2}{default}{3} 跳跃记录"
+		"ru"		"{grey}Исключён {purple}{1} {lightgreen}{2}{default}{3} рекорд у '{default}STEAM_1:{4}:{5}{grey}'"
 	}
 	"All Jumps Deleted"
 	{
 		"#format"	"{1:d},{2:d}"
-		"en"		"{grey}Deleted all jumps of '{default}STEAM_1:{1}:{2}{grey}'"
-		"chi"		"{grey}删除 '{default}STEAM_1:{1}:{2}{grey}' 的全部跳跃数据"
+		"en"		"{grey}Excluded all jumps of '{default}STEAM_1:{1}:{2}{grey}'"
+		"chi"		"{grey}排除 '{default}STEAM_1:{1}:{2}{grey}' 的全部跳跃数据"
 	}
 	"Jump Deleted"
 	{
 		"#format"	"{1:d}"
-		"en"		"{grey}Deleted jump with id {default}{1}"
-		"chi"		"{grey}删除ID为 {default}{1}的跳跃数据"
+		"en"		"{grey}Excluded jump with id {default}{1}"
+		"chi"		"{grey}排除ID为 {default}{1}的跳跃数据"
 	}
 	"Time Deleted"
 	{
 		"#format"	"{1:d}"
-		"en"		"{grey}Deleted time with id {default}{1}"
-		"chi"		"{grey}删除ID为 {default}{1}的计时"
+		"en"		"{grey}Excluded time with id {default}{1}"
+		"chi"		"{grey}排除ID为 {default}{1}的计时"
 	}
 	"No SteamID specified"
 	{

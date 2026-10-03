@@ -1,59 +1,81 @@
-/*
-	Inserts or updates the player's jumpstat into the database.
-*/
-
-
-
 public void OnLanding_SaveJumpstat(Jump jump)
 {
-	int mode = GOKZ_GetCoreOption(jump.jumper, Option_Mode);
-	
-	// No tiers given for 'Invalid' jumps.
-	if (jump.type == JumpType_Invalid || jump.type == JumpType_FullInvalid
-		 || jump.type == JumpType_Fall || jump.type == JumpType_Other
-		 || jump.type != JumpType_LadderJump && jump.offset < -JS_OFFSET_EPSILON
-		 || jump.distance > JS_MAX_JUMP_DISTANCE
-		 || jump.type == JumpType_LadderJump && jump.distance < JS_MIN_LAJ_BLOCK_DISTANCE
-		 || jump.type != JumpType_LadderJump && jump.distance < JS_MIN_BLOCK_DISTANCE)
+	if (!gB_ClientSetUp[jump.jumper] || IsFakeClient(jump.jumper))
 	{
 		return;
 	}
+
+	int mode = GOKZ_GetCoreOption(jump.jumper, Option_Mode);
 	
-	char query[1024];
-	DataPack data;
+	if (!JS_IsSaveableJump(jump))
+	{
+		return;
+	}
+
+	DB_SaveJump(jump, mode, false);
+	if (jump.block > 0)
+	{
+		DB_SaveJump(jump, mode, true);
+	}
+}
+
+static bool JS_IsSaveableJump(Jump jump)
+{
+	if (jump.type == JumpType_Invalid || jump.type == JumpType_FullInvalid || jump.type == JumpType_Fall || jump.type == JumpType_Other)
+	{
+		return false;
+	}
+	if (jump.distance > JS_MAX_JUMP_DISTANCE)
+	{
+		return false;
+	}
+	if (jump.type == JumpType_LadderJump)
+	{
+		return jump.distance >= JS_MIN_LAJ_BLOCK_DISTANCE;
+	}
+	return jump.distance >= JS_MIN_BLOCK_DISTANCE && jump.offset >= -JS_OFFSET_EPSILON;
+}
+
+static void DB_SaveJump(Jump jump, int mode, bool blockJump)
+{
 	int steamid = GetSteamAccountID(jump.jumper);
-	int int_dist = RoundToNearest(jump.distance * GOKZ_DB_JS_DISTANCE_PRECISION);
-	
-	// Non-block
-	if (gI_PBJSCache[jump.jumper][mode][jump.type][JumpstatDB_Cache_Distance] == 0
-		 || int_dist > gI_PBJSCache[jump.jumper][mode][jump.type][JumpstatDB_Cache_Distance])
+	DataPack data = JSRecord_FillDataPack(jump, steamid, mode, blockJump);
+	int distance = RoundToNearest(jump.distance * GOKZ_DB_JS_DISTANCE_PRECISION);
+	int block = blockJump ? jump.block : 0;
+	int sync = RoundToNearest(jump.sync * GOKZ_DB_JS_SYNC_PRECISION);
+	int pre = RoundToNearest(jump.preSpeed * GOKZ_DB_JS_PRE_PRECISION);
+	int max = RoundToNearest(jump.maxSpeed * GOKZ_DB_JS_MAX_PRECISION);
+	int airtime = RoundToNearest(jump.duration * GetTickInterval() * GOKZ_DB_JS_AIRTIME_PRECISION);
+	char query[1024];
+	Transaction txn = SQL_CreateTransaction();
+	if (g_DBType == DatabaseType_MySQL)
 	{
-		data = JSRecord_FillDataPack(jump, steamid, mode, false);
-		Transaction txn_noblock = SQL_CreateTransaction();
-		FormatEx(query, sizeof(query), sql_jumpstats_getrecord, steamid, jump.type, mode, 0);
-		txn_noblock.AddQuery(query);
-		SQL_ExecuteTransaction(gH_DB, txn_noblock, DB_TxnSuccess_LookupJSRecordForSave, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
+		FormatEx(query, sizeof(query), "SELECT SteamID32 FROM Players WHERE SteamID32=%d FOR UPDATE", steamid);
 	}
-	
-	// Block
-	if (jump.block > 0
-		 && (gI_PBJSCache[jump.jumper][mode][jump.type][JumpstatDB_Cache_Block] == 0
-			 || (jump.block > gI_PBJSCache[jump.jumper][mode][jump.type][JumpstatDB_Cache_Block]
-				 || jump.block == gI_PBJSCache[jump.jumper][mode][jump.type][JumpstatDB_Cache_Block]
-				 && int_dist > gI_PBJSCache[jump.jumper][mode][jump.type][JumpstatDB_Cache_BlockDistance])))
+	else
 	{
-		data = JSRecord_FillDataPack(jump, steamid, mode, true);
-		Transaction txn_block = SQL_CreateTransaction();
-		FormatEx(query, sizeof(query), sql_jumpstats_getrecord, steamid, jump.type, mode, 1);
-		txn_block.AddQuery(query);
-		SQL_ExecuteTransaction(gH_DB, txn_block, DB_TxnSuccess_LookupJSRecordForSave, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
+		FormatEx(query, sizeof(query), "SELECT SteamID32 FROM Players WHERE SteamID32=%d", steamid);
 	}
+	txn.AddQuery(query);
+	if (g_DBType == DatabaseType_MySQL)
+	{
+		FormatEx(query, sizeof(query), mysql_jumpstats_getrecord, steamid, jump.type, mode, blockJump);
+	}
+	else
+	{
+		FormatEx(query, sizeof(query), sql_jumpstats_getrecord, steamid, jump.type, mode, blockJump);
+	}
+	txn.AddQuery(query);
+	FormatEx(query, sizeof(query), sql_jumpstats_insert, steamid, jump.type, mode, distance, blockJump, block, jump.strafes, sync, pre, max, airtime);
+	txn.AddQuery(query);
+	DB_AddLastInsertIdQuery(txn);
+	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_SaveJSRecord, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
 }
 
 static DataPack JSRecord_FillDataPack(Jump jump, int steamid, int mode, bool blockJump)
 {
 	DataPack data = new DataPack();
-	data.WriteCell(jump.jumper);
+	data.WriteCell(GetClientUserId(jump.jumper));
 	data.WriteCell(steamid);
 	data.WriteCell(jump.type);
 	data.WriteCell(mode);
@@ -67,88 +89,10 @@ static DataPack JSRecord_FillDataPack(Jump jump, int steamid, int mode, bool blo
 	return data;
 }
 
-public void DB_TxnSuccess_LookupJSRecordForSave(Handle db, DataPack data, int numQueries, Handle[] results, any[] queryData)
-{
-	data.Reset();
-	int client = data.ReadCell();
-	int steamid = data.ReadCell();
-	int jumpType = data.ReadCell();
-	int mode = data.ReadCell();
-	int distance = data.ReadCell();
-	int block = data.ReadCell();
-	int strafes = data.ReadCell();
-	int sync = data.ReadCell();
-	int pre = data.ReadCell();
-	int max = data.ReadCell();
-	int airtime = data.ReadCell();
-	
-	if (!IsValidClient(client))
-	{
-		delete data;
-		return;
-	}
-	
-	char query[1024];
-	int jumpID = 0;
-	int rows = SQL_GetRowCount(results[0]);
-	if (rows == 0)
-	{
-		FormatEx(query, sizeof(query), sql_jumpstats_insert, steamid, jumpType, mode, distance, block > 0, block, strafes, sync, pre, max, airtime);
-	}
-	else
-	{
-		SQL_FetchRow(results[0]);
-		int rec_distance = SQL_FetchInt(results[0], JumpstatDB_Lookup_Distance);
-		int rec_block = SQL_FetchInt(results[0], JumpstatDB_Lookup_Block);
-		
-		if (rec_block == 0)
-		{
-			gI_PBJSCache[client][mode][jumpType][JumpstatDB_Cache_Distance] = rec_distance;
-		}
-		else
-		{
-			gI_PBJSCache[client][mode][jumpType][JumpstatDB_Cache_Block] = rec_block;
-			gI_PBJSCache[client][mode][jumpType][JumpstatDB_Cache_BlockDistance] = rec_distance;
-		}
-		
-		if (block < rec_block || block == rec_block && distance < rec_distance)
-		{
-			delete data;
-			return;
-		}
-		
-		if (rows < GOKZ_DB_JS_MAX_JUMPS_PER_PLAYER)
-		{
-			FormatEx(query, sizeof(query), sql_jumpstats_insert, steamid, jumpType, mode, distance, block > 0, block, strafes, sync, pre, max, airtime);
-		}
-		else
-		{
-			for (int i = 1; i < GOKZ_DB_JS_MAX_JUMPS_PER_PLAYER; i++)
-			{
-				SQL_FetchRow(results[0]);
-			}
-			int min_rec_id = SQL_FetchInt(results[0], JumpstatDB_Lookup_JumpID);
-			FormatEx(query, sizeof(query), sql_jumpstats_update, steamid, jumpType, mode, distance, block > 0, block, strafes, sync, pre, max, airtime, min_rec_id);
-			jumpID = min_rec_id;
-		}
-
-	}
-
-	data.WriteCell(jumpID);
-
-	Transaction txn = SQL_CreateTransaction();
-	txn.AddQuery(query);
-	if (jumpID == 0)
-	{
-		DB_AddLastInsertIdQuery(txn);
-	}
-	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_SaveJSRecord, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
-}
-
 public void DB_TxnSuccess_SaveJSRecord(Handle db, DataPack data, int numQueries, Handle[] results, any[] queryData)
 {
 	data.Reset();
-	int client = data.ReadCell();
+	int client = GetClientOfUserId(data.ReadCell());
 	data.ReadCell();
 	int jumpType = data.ReadCell();
 	int mode = data.ReadCell();
@@ -159,7 +103,7 @@ public void DB_TxnSuccess_SaveJSRecord(Handle db, DataPack data, int numQueries,
 	int pre = data.ReadCell();
 	int max = data.ReadCell();
 	int airtime = data.ReadCell();
-	int jumpID = data.ReadCell();
+	int jumpID = DB_ReadLastInsertId(results[3]);
 	delete data;
 
 	if (!IsValidClient(client) || GOKZ_JS_GetOption(client, JSOption_JumpstatsMaster) == JSToggleOption_Disabled)
@@ -167,11 +111,17 @@ public void DB_TxnSuccess_SaveJSRecord(Handle db, DataPack data, int numQueries,
 		return;
 	}
 
-	if (jumpID == 0 && numQueries > 1)
+	if (SQL_FetchRow(results[1]))
 	{
-		jumpID = DB_ReadLastInsertId(results[1]);
+		int previousDistance = SQL_FetchInt(results[1], JumpstatDB_Lookup_Distance);
+		int previousBlock = SQL_FetchInt(results[1], JumpstatDB_Lookup_Block);
+		bool improved = block > previousBlock || (block == previousBlock && distance > previousDistance);
+		if (!improved)
+		{
+			return;
+		}
 	}
-	
+
 	float distanceFloat = float(distance) / GOKZ_DB_JS_DISTANCE_PRECISION;
 	float syncFloat = float(sync) / GOKZ_DB_JS_SYNC_PRECISION;
 	float preFloat = float(pre) / GOKZ_DB_JS_PRE_PRECISION;
@@ -213,9 +163,22 @@ public void DB_DeleteBestJump(int client, int steamAccountID, int jumpType, int 
 	
 	char query[1024];
 	
-	FormatEx(query, sizeof(query), sql_jumpstats_deleterecord, steamAccountID, jumpType, mode, isBlock);
+	if (g_DBType == DatabaseType_SQLite)
+	{
+		FormatEx(query, sizeof(query), sqlite_jumpstats_deleterecord, steamAccountID, jumpType, mode, isBlock);
+	}
+	else
+	{
+		FormatEx(query, sizeof(query), mysql_jumpstats_deleterecord, steamAccountID, jumpType, mode, isBlock);
+	}
 	
 	Transaction txn = SQL_CreateTransaction();
+	if (g_DBType == DatabaseType_MySQL)
+	{
+		char lockQuery[256];
+		FormatEx(lockQuery, sizeof(lockQuery), "SELECT SteamID32 FROM Players WHERE SteamID32=%d FOR UPDATE", steamAccountID);
+		txn.AddQuery(lockQuery);
+	}
 	txn.AddQuery(query);
 	
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_BestJumpDeleted, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
@@ -256,9 +219,22 @@ public void DB_DeleteAllJumps(int client, int steamAccountID)
 	
 	char query[1024];
 	
-	FormatEx(query, sizeof(query), sql_jumpstats_deleteallrecords, steamAccountID);
+	if (g_DBType == DatabaseType_SQLite)
+	{
+		FormatEx(query, sizeof(query), sqlite_jumpstats_deleteallrecords, steamAccountID);
+	}
+	else
+	{
+		FormatEx(query, sizeof(query), mysql_jumpstats_deleteallrecords, steamAccountID);
+	}
 	
 	Transaction txn = SQL_CreateTransaction();
+	if (g_DBType == DatabaseType_MySQL)
+	{
+		char lockQuery[256];
+		FormatEx(lockQuery, sizeof(lockQuery), "SELECT SteamID32 FROM Players WHERE SteamID32=%d FOR UPDATE", steamAccountID);
+		txn.AddQuery(lockQuery);
+	}
 	txn.AddQuery(query);
 	
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_AllJumpsDeleted, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
@@ -285,9 +261,22 @@ public void DB_DeleteJump(int client, int jumpID)
 	data.WriteCell(jumpID);
 
 	char query[1024];
-	FormatEx(query, sizeof(query), sql_jumpstats_deletejump, jumpID);
+	if (g_DBType == DatabaseType_SQLite)
+	{
+		FormatEx(query, sizeof(query), sqlite_jumpstats_deletejump, jumpID);
+	}
+	else
+	{
+		FormatEx(query, sizeof(query), mysql_jumpstats_deletejump, jumpID);
+	}
 
 	Transaction txn = SQL_CreateTransaction();
+	if (g_DBType == DatabaseType_MySQL)
+	{
+		char lockQuery[256];
+		FormatEx(lockQuery, sizeof(lockQuery), "SELECT SteamID32 FROM Players WHERE SteamID32=(SELECT SteamID32 FROM Jumpstats WHERE JumpID=%d FOR UPDATE) FOR UPDATE", jumpID);
+		txn.AddQuery(lockQuery);
+	}
 	txn.AddQuery(query);
 
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_JumpDeleted, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);

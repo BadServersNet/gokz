@@ -12,12 +12,20 @@ void DB_CacheJSPBs(int client, int steamID)
 	
 	Transaction txn = SQL_CreateTransaction();
 	
-	FormatEx(query, sizeof(query), sql_jumpstats_getpbs, steamID);
+	if (g_DBType == DatabaseType_MySQL)
+	{
+		FormatEx(query, sizeof(query), mysql_jumpstats_getpbs, steamID);
+		txn.AddQuery(query);
+		FormatEx(query, sizeof(query), mysql_jumpstats_getblockpbs, steamID);
+	}
+	else
+	{
+		FormatEx(query, sizeof(query), sql_jumpstats_getpbs, steamID);
+		txn.AddQuery(query);
+		FormatEx(query, sizeof(query), sql_jumpstats_getblockpbs, steamID, steamID);
+	}
 	txn.AddQuery(query);
-	
-	FormatEx(query, sizeof(query), sql_jumpstats_getblockpbs, steamID, steamID);
-	txn.AddQuery(query);
-	
+
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_CacheJSPBs, DB_TxnFailure_Generic, GetClientUserId(client), DBPrio_High);
 }
 
@@ -37,7 +45,7 @@ public void DB_TxnSuccess_CacheJSPBs(Handle db, int userID, int numQueries, Hand
 		mode = SQL_FetchInt(results[0], 1);
 		jumpType = SQL_FetchInt(results[0], 2);
 		
-		gI_PBJSCache[client][mode][jumpType][JumpstatDB_Cache_Distance] = block;
+		gI_PBJSCache[client][mode][jumpType][JumpstatDB_Cache_Distance] = distance;
 	}
 	
 	while (SQL_FetchRow(results[1]))

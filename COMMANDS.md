@@ -169,10 +169,10 @@ Many of these commands return results for your currently selected mode.
  * `!loadtimersetup`/`!lts` - Load & lock the timer setup (start position and virtual buttons) from the database.
  * `!setcheater` - Set a SteamID as a cheater. Usage: `!setcheater <STEAM_1:X:X>`
  * `!setnotcheater` - Set a SteamID as not a cheater. Usage: `!setnotcheater <STEAM_1:X:X>`
- * `!deletebestjump` - Remove the top jumpstat of a SteamID. Usage: `!deletebestjump <STEAM_1:X:X> <mode> <jump type> <block?>`
- * `!deletealljumps` - Remove all jumpstats of a SteamID. Usage: `!deletealljumps <STEAM_1:X:X>`
- * `!deletejump` - Remove a jumpstat by it's id. Usage: `!deletejump <id>`
- * `!deletetime` - Remove a time by it's id. Usage: `!deletetime <id>`
+ * `!deletebestjump` - Exclude the top jumpstat of a SteamID. Usage: `!deletebestjump <STEAM_1:X:X> <mode> <jump type> <block?>`
+ * `!deletealljumps` - Exclude all jumpstats of a SteamID. Usage: `!deletealljumps <STEAM_1:X:X>`
+ * `!deletejump` - Exclude a jumpstat by its id. Usage: `!deletejump <id>`
+ * `!deletetime` - Exclude a time by its id. Usage: `!deletetime <id>`
 
 ### gokz-localranks
 
@@ -184,3 +184,5 @@ Many of these commands return results for your currently selected mode.
  * `!replaystore_check` - Test the replay store credentials and bucket.
  * `!replaystore_flush` - Rescan the replay outbox and retry pending uploads.
  * `!replaystore_url` - Print the public download URL for a stored replay to the console (requires `gokz_replay_store_public_url`). Without an argument it lists the most recent replays with their codes and keys. Usage: `!replaystore_url [code or key]`
+
+The legacy `delete*` commands exclude records from rankings and statistics. Runs, jumps, and their replay references remain stored permanently.

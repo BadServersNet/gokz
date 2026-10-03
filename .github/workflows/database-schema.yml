@@ -1,0 +1,33 @@
+name: Database schema
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-24.04
+    services:
+      mariadb:
+        image: mariadb:12.3.2
+        env:
+          MARIADB_ROOT_PASSWORD: migration-validation
+          MARIADB_DATABASE: gokz
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install migration client
+        run: sudo apt-get update && sudo apt-get install -y mariadb-client
+      - name: Apply and verify repeat migration
+        env:
+          MYSQL_PWD: migration-validation
+        run: |
+          printf '[client]\nhost=127.0.0.1\nuser=root\n' > "$RUNNER_TEMP/gokz-client.cnf"
+          python3 database/migrate.py gokz --defaults-extra-file "$RUNNER_TEMP/gokz-client.cnf"
+          python3 database/migrate.py gokz --defaults-extra-file "$RUNNER_TEMP/gokz-client.cnf"

@@ -13,7 +13,14 @@ void DB_OpenJumpTop(int client, int mode, int jumpType, int blockType)
 	
 	Transaction txn = SQL_CreateTransaction();
 
-	FormatEx(query, sizeof(query), sql_jumpstats_gettop, jumpType, mode, blockType, jumpType, mode, blockType, JS_TOP_RECORD_COUNT);
+	if (g_DBType == DatabaseType_MySQL)
+	{
+		FormatEx(query, sizeof(query), mysql_jumpstats_gettop, jumpType, mode, blockType, JS_TOP_RECORD_COUNT);
+	}
+	else
+	{
+		FormatEx(query, sizeof(query), sql_jumpstats_gettop, jumpType, mode, blockType, jumpType, mode, blockType, JS_TOP_RECORD_COUNT);
+	}
 	txn.AddQuery(query);
 
 	DataPack data = new DataPack();

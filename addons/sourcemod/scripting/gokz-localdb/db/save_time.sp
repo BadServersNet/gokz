@@ -75,9 +75,22 @@ public void DB_DeleteTime(int client, int timeID)
 	data.WriteCell(timeID);
 
 	char query[1024];
-	FormatEx(query, sizeof(query), sql_times_delete, timeID);
+	if (g_DBType == DatabaseType_SQLite)
+	{
+		FormatEx(query, sizeof(query), sqlite_times_delete, timeID);
+	}
+	else
+	{
+		FormatEx(query, sizeof(query), mysql_times_delete, timeID);
+	}
 
 	Transaction txn = SQL_CreateTransaction();
+	if (g_DBType == DatabaseType_MySQL)
+	{
+		char lockQuery[256];
+		FormatEx(lockQuery, sizeof(lockQuery), "SELECT SteamID32 FROM Players WHERE SteamID32=(SELECT SteamID32 FROM Times WHERE TimeID=%d FOR UPDATE) FOR UPDATE", timeID);
+		txn.AddQuery(lockQuery);
+	}
 	txn.AddQuery(query);
 
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_TimeDeleted, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
