@@ -1,7 +1,7 @@
 name: CI
 
 env:
-  SM_VERSION: "1.11"
+  SM_VERSION: "1.12"
   S3_VERSION: "0.2.0"
 
 on:

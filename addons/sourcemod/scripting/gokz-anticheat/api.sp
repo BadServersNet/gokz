@@ -52,7 +52,11 @@ public int Native_GetHitPerf(Handle plugin, int numParams)
 	}
 
 	bool[] perfs = new bool[sampleSize];
-	SortByRecent(gB_BhopHitPerf[client], AC_MAX_BHOP_SAMPLES, perfs, sampleSize, gI_BhopIndex[client]);
+	for (int i = 0; i < sampleSize; i++)
+	{
+		int recentIndex = (gI_BhopIndex[client] - i + AC_MAX_BHOP_SAMPLES) % AC_MAX_BHOP_SAMPLES;
+		perfs[i] = gB_BhopHitPerf[client][recentIndex];
+	}
 	SetNativeArray(2, perfs, sampleSize);
 	return sampleSize;
 }

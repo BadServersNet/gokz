@@ -208,7 +208,10 @@ stock Address Malloc(int size, const char[] name)
 	else
 		entry.addr = SDKCall(gMalloc, g_pMemAlloc, size);
 	
-	ASSERT_FMT(entry.addr != Address_Null, "Failed to allocate memory (size: %i)!", size);
+	if (entry.addr == Address_Null)
+	{
+		SetFailState("Failed to allocate memory (size: %i)!", size);
+	}
 	gMemoryPool.PushArray(entry);
 	
 	return entry.addr;
