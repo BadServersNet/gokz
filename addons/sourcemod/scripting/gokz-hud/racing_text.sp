@@ -22,8 +22,7 @@ void OnPluginStart_RacingText()
 void OnPlayerRunCmdPost_RacingText(int client, int cmdnum)
 {
 	int updateSpeed = gB_FastUpdateRate[client] ? 3 : 6;
-	bool racingAvailable = gB_GOKZRacing || gB_GOKZReplays;
-	if (racingAvailable && cmdnum % updateSpeed == 2)
+	if (gB_GOKZRacing && cmdnum % updateSpeed == 2)
 	{
 		UpdateRacingText(client);
 	}
@@ -95,26 +94,6 @@ static void UpdateRacingText(int client)
 	}
 }
 
-static bool ShowBotRaceText(KZPlayer player)
-{
-	ReplaySessionInfo session;
-	if (!GetSessionInfo(player, session) || session.type != ReplaySession_Race)
-	{
-		return false;
-	}
-	if (session.state == ReplaySessionState_Countdown)
-	{
-		ShowCountdown(player, session.countdown, RP_RACE_COUNTDOWN_TIME);
-		return true;
-	}
-	if (session.go)
-	{
-		ShowGo(player);
-		return true;
-	}
-	return false;
-}
-
 static void ClearRacingText(int client)
 {
 	ClearSyncHud(client, racingHudSynchronizer);
@@ -122,10 +101,6 @@ static void ClearRacingText(int client)
 
 static void ShowRacingText(KZPlayer player, KZPlayer targetPlayer)
 {
-	if (ShowBotRaceText(player) || !gB_GOKZRacing)
-	{
-		return;
-	}
 	if (GOKZ_RC_GetStatus(targetPlayer.ID) != RacerStatus_Racing)
 	{
 		return;
@@ -145,34 +120,29 @@ static void ShowRacingText(KZPlayer player, KZPlayer targetPlayer)
 static void ShowCountdownText(KZPlayer player, KZPlayer targetPlayer)
 {
 	float timeToStart = (countdownStartTime[targetPlayer.ID] + RC_COUNTDOWN_TIME) - GetGameTime();
-	ShowCountdown(player, timeToStart, RC_COUNTDOWN_TIME);
-}
-
-static void ShowCountdown(KZPlayer player, float timeToStart, float countdownTime)
-{
 	int colour[4];
-	GetCountdownColour(timeToStart, countdownTime, colour);
+	GetCountdownColour(timeToStart, colour);
 
 	SetHudTextParams(-1.0, 0.3, GetTextHoldTime(gB_FastUpdateRate[player.ID] ? 3 : 6), colour[0], colour[1], colour[2], colour[3], 0, 1.0, 0.0, 0.0);
 	ShowSyncHudText(player.ID, racingHudSynchronizer, "%t\n\n%d", "Get Ready", IntMax(RoundToCeil(timeToStart), 1));
 }
 
-static void GetCountdownColour(float timeToStart, float countdownTime, int buffer[4])
+static void GetCountdownColour(float timeToStart, int buffer[4])
 {
 	// From red to green
-	if (timeToStart >= countdownTime)
+	if (timeToStart >= RC_COUNTDOWN_TIME)
 	{
 		buffer[0] = 255;
 		buffer[1] = 0;
 	}
-	else if (timeToStart > countdownTime / 2.0)
+	else if (timeToStart > RC_COUNTDOWN_TIME / 2.0)
 	{
 		buffer[0] = 255;
-		buffer[1] = RoundFloat(-510.0 / countdownTime * timeToStart + 510.0);
+		buffer[1] = RoundFloat(-510.0 / RC_COUNTDOWN_TIME * timeToStart + 510.0);
 	}
 	else if (timeToStart > 0.0)
 	{
-		buffer[0] = RoundFloat(510.0 / countdownTime * timeToStart);
+		buffer[0] = RoundFloat(510.0 / RC_COUNTDOWN_TIME * timeToStart);
 		buffer[1] = 255;
 	}
 	else
@@ -191,11 +161,7 @@ static void ShowStartedText(KZPlayer player, KZPlayer targetPlayer)
 	{
 		return;
 	}
-	ShowGo(player);
-}
 
-static void ShowGo(KZPlayer player)
-{
 	SetHudTextParams(-1.0, 0.3, GetTextHoldTime(gB_FastUpdateRate[player.ID] ? 3 : 6), 0, 255, 0, 255, 0, 1.0, 0.0, 0.0);
 	ShowSyncHudText(player.ID, racingHudSynchronizer, "%t", "Go!");
 } 

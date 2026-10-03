@@ -40,7 +40,6 @@ enum
 {
 	ReplaySessionState_None = 0,
 	ReplaySessionState_Loading,
-	ReplaySessionState_Countdown,
 	ReplaySessionState_Ready,
 	ReplaySessionState_Running,
 	ReplaySessionState_Waiting,
@@ -171,8 +170,6 @@ enum struct ReplaySessionInfo
 	int state;
 	char alias[MAX_NAME_LENGTH];
 	float runTime;
-	float countdown;
-	bool go;
 	float playerProgress;
 	float botProgress;
 	bool hasTimeDiff;
@@ -241,7 +238,6 @@ enum struct ReplayTickData
 #define RP_SESSION_LOOKUP_TIMEOUT 15.0
 #define RP_SESSION_BOT_COLLISION_GROUP 2
 #define RP_SESSION_SYNC_TOLERANCE 4
-#define RP_RACE_COUNTDOWN_TIME 5.0
 #define RP_LEAD_TRAIL_INTERVAL 4
 #define RP_LEAD_TRAIL_LIFE 2.0
 #define RP_PLAYBACK_BREATHER_TIME 2.0

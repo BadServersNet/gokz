@@ -206,11 +206,6 @@
 	{
 		"en"		"Loading"
 	}
-	"Session Text - Countdown"
-	{
-		"#format"	"{1:d}"
-		"en"		"Starting in {1}"
-	}
 	"Session Text - Ready"
 	{
 		"en"		"Start your timer"

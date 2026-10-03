@@ -1,7 +1,5 @@
 #define RACE_TIE_THRESHOLD 0.005
 
-static float raceCountdownEnd[MAXPLAYERS + 1];
-static bool raceHadHeat[MAXPLAYERS + 1];
 static bool raceBotFinished[MAXPLAYERS + 1];
 static bool raceWon[MAXPLAYERS + 1];
 static float raceResultDiff[MAXPLAYERS + 1];
@@ -12,8 +10,6 @@ static float raceResultDiff[MAXPLAYERS + 1];
 
 void Race_Reset(int client)
 {
-	raceCountdownEnd[client] = 0.0;
-	raceHadHeat[client] = false;
 	raceBotFinished[client] = false;
 	raceWon[client] = false;
 	raceResultDiff[client] = 0.0;
@@ -21,21 +17,7 @@ void Race_Reset(int client)
 
 void Race_Begin(int client)
 {
-	Race_Restart(client);
-
-	char alias[MAX_NAME_LENGTH];
-	Session_GetAlias(client, alias, sizeof(alias));
-	char runTime[32];
-	Session_FormatRunTime(client, runTime, sizeof(runTime));
-	char timeType[16];
-	Session_FormatTimeType(client, timeType, sizeof(timeType));
-	GOKZ_PrintToChat(client, true, "%t", "Race - Countdown", alias, runTime, timeType);
-}
-
-void Race_Restart(int client)
-{
 	ResetHeat(client);
-	raceHadHeat[client] = false;
 	GOKZ_StopTimer(client, false);
 	if (GOKZ_SetStartPositionToMapStart(client, 0))
 	{
@@ -45,15 +27,18 @@ void Race_Restart(int client)
 	{
 		GOKZ_PrintToChat(client, true, "%t", "Race - No Start");
 	}
-	raceCountdownEnd[client] = GetGameTime() + RP_RACE_COUNTDOWN_TIME;
-	Session_SetState(client, ReplaySessionState_Countdown);
+
+	char alias[MAX_NAME_LENGTH];
+	Session_GetAlias(client, alias, sizeof(alias));
+	char runTime[32];
+	Session_FormatRunTime(client, runTime, sizeof(runTime));
+	char timeType[16];
+	Session_FormatTimeType(client, timeType, sizeof(timeType));
+	GOKZ_PrintToChat(client, true, "%t", "Race - Started", alias, runTime, timeType);
 }
 
 void Race_FillInfo(int client, ReplaySessionInfo info)
 {
-	float remaining = raceCountdownEnd[client] - GetGameTime();
-	info.countdown = FloatMax(remaining, 0.0);
-	info.go = info.state == ReplaySessionState_Ready && !raceHadHeat[client];
 	info.botFinished = raceBotFinished[client];
 	info.won = raceWon[client];
 	info.resultDiff = raceResultDiff[client];
@@ -62,26 +47,12 @@ void Race_FillInfo(int client, ReplaySessionInfo info)
 void Race_Update(int client)
 {
 	int state = Session_GetState(client);
-	if (state == ReplaySessionState_Countdown)
-	{
-		UpdateCountdown(client);
-		return;
-	}
 	if (state != ReplaySessionState_Running && state != ReplaySessionState_Finished)
 	{
 		return;
 	}
 	SyncBotToTimer(client);
 	CheckBotFinished(client);
-}
-
-Action Race_OnTimerStart(int client)
-{
-	if (Session_GetState(client) == ReplaySessionState_Countdown)
-	{
-		return Plugin_Stop;
-	}
-	return Plugin_Continue;
 }
 
 void Race_OnTimerStart_Post(int client, int course)
@@ -96,7 +67,6 @@ void Race_OnTimerStart_Post(int client, int course)
 		return;
 	}
 	ResetHeat(client);
-	raceHadHeat[client] = true;
 	Playback_SetPaused(Session_GetBot(client), false);
 	Session_SetState(client, ReplaySessionState_Running);
 }
@@ -163,15 +133,6 @@ static void ResetHeat(int client)
 	raceBotFinished[client] = false;
 	raceWon[client] = false;
 	raceResultDiff[client] = 0.0;
-	Session_SetState(client, ReplaySessionState_Ready);
-}
-
-static void UpdateCountdown(int client)
-{
-	if (GetGameTime() < raceCountdownEnd[client])
-	{
-		return;
-	}
 	Session_SetState(client, ReplaySessionState_Ready);
 }
 

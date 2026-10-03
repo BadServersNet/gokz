@@ -551,10 +551,10 @@
 		"#format"	"{1:s}"
 		"en"		"{grey}Downloading {lime}{1}{grey}'s run, your race starts when it is ready."
 	}
-	"Race - Countdown"
+	"Race - Started"
 	{
 		"#format"	"{1:s},{2:s},{3:s}"
-		"en"		"{grey}Get ready to race {lime}{1}{grey}'s {default}{2} {3}{grey} run. The bot starts with your timer, restart it for another heat."
+		"en"		"{grey}Racing {lime}{1}{grey}'s {default}{2} {3}{grey} run. The bot leaves when your timer starts, restart it for another heat."
 	}
 	"Race - No Start"
 	{

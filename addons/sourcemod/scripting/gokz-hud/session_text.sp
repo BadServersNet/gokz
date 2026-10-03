@@ -101,12 +101,6 @@ static void FormatSessionStatus(KZPlayer player, ReplaySessionInfo session, bool
 		{
 			FormatPhrase(player, "Session Text - Loading", SESSION_COLOUR_VALUE, html, buffer, maxlength);
 		}
-		case ReplaySessionState_Countdown:
-		{
-			char countdown[32];
-			FormatEx(countdown, sizeof(countdown), "%T", "Session Text - Countdown", player.ID, IntMax(RoundToCeil(session.countdown), 1));
-			Colourise(countdown, SESSION_COLOUR_VALUE, html, buffer, maxlength);
-		}
 		case ReplaySessionState_Ready:
 		{
 			FormatPhrase(player, "Session Text - Ready", SESSION_COLOUR_VALUE, html, buffer, maxlength);

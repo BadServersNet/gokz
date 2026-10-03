@@ -384,15 +384,6 @@ void OnClientDisconnect_Session(int client)
 	Session_Stop(client, false);
 }
 
-Action GOKZ_OnTimerStart_Session(int client)
-{
-	if (sessionType[client] != ReplaySession_Race)
-	{
-		return Plugin_Continue;
-	}
-	return Race_OnTimerStart(client);
-}
-
 void GOKZ_OnTimerStart_Post_Session(int client, int course)
 {
 	switch (sessionType[client])

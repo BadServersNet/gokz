@@ -298,12 +298,6 @@ public void OnPlayerRunCmdPost(int client, int buttons, int impulse, const float
 
 public Action GOKZ_OnTimerStart(int client, int course)
 {
-	Action sessionAction = GOKZ_OnTimerStart_Session(client);
-	if (sessionAction != Plugin_Continue)
-	{
-		return sessionAction;
-	}
-
 	Action action = GOKZ_OnTimerStart_Recording(client);
 	if (action != Plugin_Continue)
 	{
