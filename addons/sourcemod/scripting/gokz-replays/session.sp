@@ -54,7 +54,7 @@ void Session_Toggle(int client, int type)
 
 void Session_Request(int client, int type, const char[] code)
 {
-	if (!CanStartSession(client))
+	if (!CanStartSession(client, type))
 	{
 		return;
 	}
@@ -74,7 +74,7 @@ void Session_Request(int client, int type, const char[] code)
 
 void Session_RequestEntry(int client, int type, ReplayEntry entry)
 {
-	if (!CanStartSession(client))
+	if (!CanStartSession(client, type))
 	{
 		return;
 	}
@@ -507,7 +507,7 @@ public Action Hook_SessionBotTransmit(int entity, int client)
 
 // =====[ PRIVATE ]=====
 
-static bool CanStartSession(int client)
+static bool CanStartSession(int client, int type)
 {
 	if (gH_DB == null)
 	{
@@ -524,6 +524,14 @@ static bool CanStartSession(int client)
 	if (IsInPlayerRace(client))
 	{
 		GOKZ_PrintToChat(client, true, "%t", "Session - In Race");
+		GOKZ_PlayErrorSound(client);
+		return false;
+	}
+	bool isRace = type == ReplaySession_Race;
+	bool isTimerRunning = GOKZ_GetTimerRunning(client);
+	if (isRace && isTimerRunning)
+	{
+		GOKZ_PrintToChat(client, true, "%t", "Race - Timer Running");
 		GOKZ_PlayErrorSound(client);
 		return false;
 	}

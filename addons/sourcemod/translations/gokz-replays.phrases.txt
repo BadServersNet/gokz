@@ -584,6 +584,10 @@
 	{
 		"en"		"{grey}Your race bot has been removed."
 	}
+	"Race - Timer Running"
+	{
+		"en"		"{darkred}You cannot start a race while your timer is running. Stop your timer with {default}!stop{darkred} first."
+	}
 	"Session - Must Be Alive"
 	{
 		"en"		"{darkred}You must be playing to use a lead or race bot."
