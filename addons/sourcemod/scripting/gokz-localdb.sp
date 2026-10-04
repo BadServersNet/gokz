@@ -8,6 +8,7 @@
 #undef REQUIRE_EXTENSIONS
 #undef REQUIRE_PLUGIN
 #include <gokz/jumpstats>
+#include <gokz/replays>
 
 #pragma newdecls required
 #pragma semicolon 1

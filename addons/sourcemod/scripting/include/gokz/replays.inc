@@ -415,6 +415,8 @@ native int GOKZ_RP_GetPendingUploadCount();
  */
 native int GOKZ_RP_ClearUploadQueue();
 
+native bool GOKZ_RP_CanRecordJump(int client, int airtimeTicks);
+
 
 // =====[ DEPENDENCY ]=====
 
@@ -442,5 +444,6 @@ public void __pl_gokz_replays_SetNTVOptional()
 	MarkNativeAsOptional("GOKZ_RP_ImportReplay");
 	MarkNativeAsOptional("GOKZ_RP_GetPendingUploadCount");
 	MarkNativeAsOptional("GOKZ_RP_ClearUploadQueue");
+	MarkNativeAsOptional("GOKZ_RP_CanRecordJump");
 }
 #endif

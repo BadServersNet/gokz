@@ -12,6 +12,12 @@ public void OnLanding_SaveJumpstat(Jump jump)
 		return;
 	}
 
+	bool recordable = JS_CanRecordReplay(jump);
+	if (!recordable)
+	{
+		return;
+	}
+
 	DB_SaveJump(jump, mode, false);
 	if (jump.block > 0)
 	{
@@ -34,6 +40,17 @@ static bool JS_IsSaveableJump(Jump jump)
 		return jump.distance >= JS_MIN_LAJ_BLOCK_DISTANCE;
 	}
 	return jump.distance >= JS_MIN_BLOCK_DISTANCE && jump.offset >= -JS_OFFSET_EPSILON;
+}
+
+static bool JS_CanRecordReplay(Jump jump)
+{
+	FeatureStatus status = GetFeatureStatus(FeatureType_Native, "GOKZ_RP_CanRecordJump");
+	if (status != FeatureStatus_Available)
+	{
+		return false;
+	}
+
+	return GOKZ_RP_CanRecordJump(jump.jumper, jump.duration);
 }
 
 static void DB_SaveJump(Jump jump, int mode, bool blockJump)

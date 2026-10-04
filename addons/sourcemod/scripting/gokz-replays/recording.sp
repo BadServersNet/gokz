@@ -458,6 +458,22 @@ static bool SaveRecordingOfCheater(int client, ACReason reason)
 	return true;
 }
 
+bool CanRecordJump(int client, int airtimeTicks)
+{
+	if (recordedRecentData[client] == null)
+	{
+		return false;
+	}
+
+	int replayTicks = airtimeTicks + 2 * preAndPostRunTickCount;
+	if (replayTicks >= maxCheaterReplayTicks)
+	{
+		return false;
+	}
+
+	return replayTicks <= recordedRecentData[client].Length;
+}
+
 static bool SaveRecordingOfJump(int client, int jumptype, float distance, int block, int strafes, float sync, float pre, float max, int airtime, int jumpID)
 {
 	// Just cause I know how buggy jumpstats can be

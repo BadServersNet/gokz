@@ -17,6 +17,7 @@ void CreateNatives()
 	CreateNative("GOKZ_RP_ImportReplay", Native_RP_ImportReplay);
 	CreateNative("GOKZ_RP_GetPendingUploadCount", Native_RP_GetPendingUploadCount);
 	CreateNative("GOKZ_RP_ClearUploadQueue", Native_RP_ClearUploadQueue);
+	CreateNative("GOKZ_RP_CanRecordJump", Native_RP_CanRecordJump);
 }
 
 public int Native_RP_GetPlaybackInfo(Handle plugin, int numParams)
@@ -25,6 +26,14 @@ public int Native_RP_GetPlaybackInfo(Handle plugin, int numParams)
 	GetPlaybackState(GetNativeCell(1), info);
 	SetNativeArray(2, info, sizeof(HUDInfo));
 	return 1;
+}
+
+public int Native_RP_CanRecordJump(Handle plugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	int airtimeTicks = GetNativeCell(2);
+	bool recordable = CanRecordJump(client, airtimeTicks);
+	return view_as<int>(recordable);
 }
 
 public int Native_RP_LoadJumpReplay(Handle plugin, int numParams)
