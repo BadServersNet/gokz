@@ -3,6 +3,7 @@ static GlobalForward H_OnClientSetup;
 static GlobalForward H_OnMapSetup;
 static GlobalForward H_OnTimeInserted;
 static GlobalForward H_OnJumpstatPB;
+static GlobalForward H_OnJumpstatInserted;
 
 
 
@@ -15,6 +16,7 @@ void CreateGlobalForwards()
 	H_OnMapSetup = new GlobalForward("GOKZ_DB_OnMapSetup", ET_Ignore, Param_Cell);
 	H_OnTimeInserted = new GlobalForward("GOKZ_DB_OnTimeInserted", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
 	H_OnJumpstatPB = new GlobalForward("GOKZ_DB_OnJumpstatPB", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
+	H_OnJumpstatInserted = new GlobalForward("GOKZ_DB_OnJumpstatInserted", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
 }
 
 void Call_OnDatabaseConnect()
@@ -58,6 +60,23 @@ void Call_OnTimeInserted(int client, int steamID, int mapID, int course, int mod
 void Call_OnJumpstatPB(int client, int jumptype, int mode, float distance, int block, int strafes, float sync, float pre, float max, int airtime, int jumpID)
 {
 	Call_StartForward(H_OnJumpstatPB);
+	Call_PushCell(client);
+	Call_PushCell(jumptype);
+	Call_PushCell(mode);
+	Call_PushCell(distance);
+	Call_PushCell(block);
+	Call_PushCell(strafes);
+	Call_PushCell(sync);
+	Call_PushCell(pre);
+	Call_PushCell(max);
+	Call_PushCell(airtime);
+	Call_PushCell(jumpID);
+	Call_Finish();
+}
+
+void Call_OnJumpstatInserted(int client, int jumptype, int mode, float distance, int block, int strafes, float sync, float pre, float max, int airtime, int jumpID)
+{
+	Call_StartForward(H_OnJumpstatInserted);
 	Call_PushCell(client);
 	Call_PushCell(jumptype);
 	Call_PushCell(mode);

@@ -106,7 +106,19 @@ public void DB_TxnSuccess_SaveJSRecord(Handle db, DataPack data, int numQueries,
 	int jumpID = DB_ReadLastInsertId(results[3]);
 	delete data;
 
-	if (!IsValidClient(client) || GOKZ_JS_GetOption(client, JSOption_JumpstatsMaster) == JSToggleOption_Disabled)
+	if (!IsValidClient(client))
+	{
+		return;
+	}
+
+	float distanceFloat = float(distance) / GOKZ_DB_JS_DISTANCE_PRECISION;
+	float syncFloat = float(sync) / GOKZ_DB_JS_SYNC_PRECISION;
+	float preFloat = float(pre) / GOKZ_DB_JS_PRE_PRECISION;
+	float maxFloat = float(max) / GOKZ_DB_JS_MAX_PRECISION;
+
+	Call_OnJumpstatInserted(client, jumpType, mode, distanceFloat, block, strafes, syncFloat, preFloat, maxFloat, airtime, jumpID);
+
+	if (GOKZ_JS_GetOption(client, JSOption_JumpstatsMaster) == JSToggleOption_Disabled)
 	{
 		return;
 	}
@@ -122,11 +134,6 @@ public void DB_TxnSuccess_SaveJSRecord(Handle db, DataPack data, int numQueries,
 		}
 	}
 
-	float distanceFloat = float(distance) / GOKZ_DB_JS_DISTANCE_PRECISION;
-	float syncFloat = float(sync) / GOKZ_DB_JS_SYNC_PRECISION;
-	float preFloat = float(pre) / GOKZ_DB_JS_PRE_PRECISION;
-	float maxFloat = float(max) / GOKZ_DB_JS_MAX_PRECISION;
-	
 	if (block == 0)
 	{
 		gI_PBJSCache[client][mode][jumpType][JumpstatDB_Cache_Distance] = distance;

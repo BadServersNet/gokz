@@ -249,7 +249,7 @@ void GOKZ_AC_OnPlayerSuspected_Recording(int client, ACReason reason)
 	SaveRecordingOfCheater(client, reason);
 }
 
-void GOKZ_DB_OnJumpstatPB_Recording(int client, int jumptype, float distance, int block, int strafes, float sync, float pre, float max, int airtime, int jumpID)
+void GOKZ_DB_OnJumpstatInserted_Recording(int client, int jumptype, float distance, int block, int strafes, float sync, float pre, float max, int airtime, int jumpID)
 {
 	DataPack data = new DataPack();
 	data.WriteCell(GetClientUserId(client));

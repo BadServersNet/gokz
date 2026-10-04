@@ -247,6 +247,19 @@ forward void GOKZ_DB_OnJumpstatPB(
 	int airtime,
 	int jumpID);
 
+forward void GOKZ_DB_OnJumpstatInserted(
+	int client,
+	int jumptype,
+	int mode,
+	float distance,
+	int block,
+	int strafes,
+	float sync,
+	float pre,
+	float max,
+	int airtime,
+	int jumpID);
+
 
 // =====[ NATIVES ]=====
 
