@@ -14,7 +14,7 @@
 public Plugin myinfo = 
 {
 	name = "GOKZ Pistol", 
-	author = "DanZay", 
+	author = "DanZay (USP-S fix by BuSheeZy)", 
 	description = "Allows players to pick a pistol to KZ with", 
 	version = GOKZ_VERSION, 
 	url = GOKZ_SOURCE_URL
@@ -140,7 +140,8 @@ void GivePistol(int client, int pistol)
 	}
 	else
 	{
-		GivePlayerItem(client, gC_PistolClassNames[pistol]);
+		int weapon = GivePlayerItem(client, gC_PistolClassNames[pistol]);
+		EnsurePistolDefinitionIndex(client, pistol, weapon);
 	}
 
 	// Go back to original team
@@ -148,6 +149,26 @@ void GivePistol(int client, int pistol)
 	{
 		CS_SwitchTeam(client, playerTeam);
 	}
+}
+
+void EnsurePistolDefinitionIndex(int client, int pistol, int weapon)
+{
+	int definitionIndex = gI_PistolDefinitionIndexes[pistol];
+	if (definitionIndex == 0 || weapon == -1)
+	{
+		return;
+	}
+
+	int givenDefinitionIndex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+	if (givenDefinitionIndex == definitionIndex)
+	{
+		return;
+	}
+
+	int replacement = CreateEntityByName(gC_PistolClassNames[pistol]);
+	DispatchSpawn(replacement);
+	SetEntProp(replacement, Prop_Send, "m_iItemDefinitionIndex", definitionIndex);
+	EquipPlayerWeapon(client, replacement);
 }
 
 
