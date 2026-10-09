@@ -248,12 +248,12 @@ void DB_LookupProgressReplay(int client, const char[] code)
 	SQL_ExecuteTransaction(gH_DB, txn, DB_TxnSuccess_ProgressReplay, DB_TxnFailure_Generic_DataPack, data, DBPrio_Low);
 }
 
-void DB_LoadSessionCandidates(int client, int token, const char[] map)
+void DB_LoadSessionCandidates(int client, int token, const char[] map, int mode)
 {
 	char mapEscaped[129];
 	SQL_EscapeString(gH_DB, map, mapEscaped, sizeof(mapEscaped));
 	char query[4096];
-	FormatEx(query, sizeof(query), sql_replays_getroute, mapEscaped, RP_PROGRESS_ROUTE_CANDIDATES);
+	FormatEx(query, sizeof(query), sql_replays_getsessionroute, mapEscaped, mode, RP_PROGRESS_ROUTE_CANDIDATES);
 	ExecuteSessionQuery(client, token, query, DB_TxnSuccess_SessionCandidates);
 }
 

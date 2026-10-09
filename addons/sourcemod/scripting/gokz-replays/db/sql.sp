@@ -170,6 +170,16 @@ SELECT " ... SQL_REPLAY_RUN_COLUMNS ... " \
     ORDER BY t.RunTime \
     LIMIT %d";
 
+char sql_replays_getsessionroute[] = "\
+SELECT " ... SQL_REPLAY_RUN_COLUMNS ... " \
+    FROM Replays r \
+    INNER JOIN ValidTimes t ON t.TimeID=r.TimeID \
+    INNER JOIN MapCourses mc ON mc.MapCourseID=t.MapCourseID \
+    INNER JOIN Players p ON p.SteamID32=t.SteamID32 \
+    WHERE r.ReplayType=0 AND p.Cheater=0 AND r.MapName='%s' AND mc.Course=0 AND t.Mode=%d \
+    ORDER BY t.RunTime \
+    LIMIT %d";
+
 char sql_replays_getpb[] = "\
 SELECT " ... SQL_REPLAY_RUN_COLUMNS ... " \
     FROM Replays r \

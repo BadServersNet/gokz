@@ -66,7 +66,8 @@ void Session_Request(int client, int type, const char[] code)
 
 	if (code[0] == '\0')
 	{
-		DB_LoadSessionCandidates(client, sessionToken[client], gC_CurrentMap);
+		int mode = GOKZ_GetCoreOption(client, Option_Mode);
+		DB_LoadSessionCandidates(client, sessionToken[client], gC_CurrentMap, mode);
 		return;
 	}
 	DB_LookupSessionReplay(client, sessionToken[client], code);

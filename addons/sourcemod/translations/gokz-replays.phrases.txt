@@ -598,7 +598,7 @@
 	}
 	"Session - No Replay"
 	{
-		"en"		"{darkred}There is no main course run replay for this map yet."
+		"en"		"{darkred}There is no main course run replay in your mode for this map yet."
 	}
 	"Session - Not A Run"
 	{
